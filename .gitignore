@@ -1,3 +1,5 @@
 *.rbxl 
 *.log
 *.exe
+*.txt
+*.bat
