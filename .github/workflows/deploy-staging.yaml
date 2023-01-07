@@ -11,9 +11,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ok-nick/setup-aftman@v0.3.0
 
-      - run: aftman install
-      - run: rojo build -o bsb-build.rbxl
-
       - name: Publish
         shell: bash
         env:
