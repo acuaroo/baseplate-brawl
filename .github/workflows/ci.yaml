@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  lint:
-    name: Lint
+  lint-client:
+    name: Linting Client
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -22,15 +22,40 @@ jobs:
           version: "^1.0.0"
           token: ${{ SECRETS.GITHUB_TOKEN }}
 
-      - name: Lint
+      - name: Lint Client
         run: |
-          selene ./workspace
-  style:
-    name: Styling
+          selene ./workspace/Client
+  lint-server:
+    name: Linting Server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: Roblox/setup-foreman@v1
+        name: Install Foreman
+        with:
+          version: "^1.0.0"
+          token: ${{ SECRETS.GITHUB_TOKEN }}
+
+      - name: Lint Server
+        run: |
+          selene ./workspace/Server
+  style-client:
+    name: Styling Client
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: JohnnyMorganz/stylua-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --check ./workspace
+          args: --check ./workspace/Client
+  style-server:
+    name: Styling Server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: JohnnyMorganz/stylua-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check ./workspace/Server
