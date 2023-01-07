@@ -20,25 +20,27 @@ function AnimClient:Run()
 	animRelay.OnClientEvent:Connect(function(req, cancel, delTime, override)
 		if not cancel then
 			local animation = animations:FindFirstChild(req)
-			
-			if not animation then return end
-			
+
+			if not animation then
+				return
+			end
+
 			while character.Parent == nil do
 				task.wait()
 			end
-			
+
 			local animLoaded = animator:LoadAnimation(animation)
-			
-			repeat 
+
+			repeat
 				task.wait()
-			 until animLoaded.Length > 0
-			
+			until animLoaded.Length > 0
+
 			if override then
 				animLoaded:Play()
-				
+
 				task.spawn(function()
 					animLoaded.Stopped:Wait()
-					
+
 					if playing[override] then
 						playing[override]:Stop()
 					end
@@ -46,9 +48,9 @@ function AnimClient:Run()
 			else
 				animLoaded:Play()
 			end
-			
+
 			playing[req] = animLoaded
-			
+
 			if delTime then
 				task.delay(delTime, function()
 					if animLoaded then
@@ -59,8 +61,10 @@ function AnimClient:Run()
 			end
 		else
 			local animation = playing[req]
-			if not animation then return end
-			
+			if not animation then
+				return
+			end
+
 			animation:Stop()
 			playing[req] = nil
 		end

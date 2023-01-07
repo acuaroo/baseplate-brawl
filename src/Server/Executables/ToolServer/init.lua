@@ -5,7 +5,7 @@ local MetaPlayers = require(script.Parent.PlayerServer)
 
 local ClassList = {
 	["Melee"] = require(script.Melee),
-	["Func"] = require(script.Func)
+	["Func"] = require(script.Func),
 }
 
 local toolPrep = ReplicatedStorage["Events"].ToolPrep
@@ -18,17 +18,19 @@ local ToolServer = {}
 
 function ToolServer:Run()
 	local function toolCheck(player, toolobj)
-		if not toolPrepTable[player][toolobj.Name] then return false end
+		if not toolPrepTable[player][toolobj.Name] then
+			return false
+		end
 		return toolPrepTable[player][toolobj.Name]
 	end
-	
+
 	toolPrep.OnServerEvent:Connect(function(player, toolobj, config)
-		if toolPrepTable[player][toolobj.Name] then 
+		if toolPrepTable[player][toolobj.Name] then
 			local tool = toolPrepTable[player][toolobj.Name]
-			
+
 			tool:CleanCast()
 			tool:CleanOff()
-			
+
 			return
 		end
 
@@ -46,21 +48,30 @@ function ToolServer:Run()
 
 	animRelay.OnServerEvent:Connect(function(player, toolobj)
 		local tool = toolCheck(player, toolobj)
-		if not tool then return false end
+		if not tool then
+			return false
+		end
 
 		MetaPlayers[player].PrimaryState = "NONE"
 		MetaPlayers[player]:Changed()
 		tool:Cleanup()
 	end)
 
-
 	toolActivated.OnServerInvoke = function(player, toolobj, _)
 		local tool = toolCheck(player, toolobj)
-		
-		if not tool then return false end
-		if tool.Debouncing then return false end
-		if MetaPlayers[player].PrimaryState == "STUN" then return false end
-		if MetaPlayers[player].PrimaryState == "STUNLOCK" then return false end
+
+		if not tool then
+			return false
+		end
+		if tool.Debouncing then
+			return false
+		end
+		if MetaPlayers[player].PrimaryState == "STUN" then
+			return false
+		end
+		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
+			return false
+		end
 
 		tool:Activate()
 
@@ -70,17 +81,26 @@ function ToolServer:Run()
 	toolOffhand.OnServerInvoke = function(player, toolobj, _, enable)
 		local tool = toolCheck(player, toolobj)
 
-		if not tool then return false end
-		if tool.OffDebouncing then return false end
-		if MetaPlayers[player].PrimaryState == "STUN" then return false end
-		if MetaPlayers[player].MovementState == "RUNNING" then return false end
-		if MetaPlayers[player].PrimaryState == "STUNLOCK" then return false end
+		if not tool then
+			return false
+		end
+		if tool.OffDebouncing then
+			return false
+		end
+		if MetaPlayers[player].PrimaryState == "STUN" then
+			return false
+		end
+		if MetaPlayers[player].MovementState == "RUNNING" then
+			return false
+		end
+		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
+			return false
+		end
 
 		tool:Offhand(enable)
 
 		return true
 	end
-
 
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function()

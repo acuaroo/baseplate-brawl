@@ -16,7 +16,7 @@ local animations = ReplicatedStorage["Animations"]
 
 local activatedCon
 local offhandCon
-local offhandDiscon 
+local offhandDiscon
 local spearCon
 
 local ToolClient = {}
@@ -29,12 +29,11 @@ function ToolClient:Run()
 				spearCon = nil
 			end
 
-			if workspace:FindFirstChild(char.Name.."SpearVisual") then
-				workspace[char.Name.."SpearVisual"]:Destroy()
+			if workspace:FindFirstChild(char.Name .. "SpearVisual") then
+				workspace[char.Name .. "SpearVisual"]:Destroy()
 			end
 		end,
 	}
-
 
 	local init = {
 		["throwSpear"] = function(char, tool)
@@ -44,7 +43,7 @@ function ToolClient:Run()
 			local spearPartB = ReplicatedStorage["Assets"].SpearPartB:Clone()
 
 			local cache = Instance.new("Folder")
-			cache.Name = char.Name.."SpearVisual"
+			cache.Name = char.Name .. "SpearVisual"
 			cache.Parent = workspace
 
 			local beam = spearPartA.Attachment.Beam
@@ -54,12 +53,14 @@ function ToolClient:Run()
 
 			beam.Attachment0 = spearPartA.Attachment
 			beam.Attachment1 = spearPartB.Attachment
-			
+
 			spearCon = RunService.RenderStepped:Connect(function()
 				spearPartA.Position = tool.Handle.ThrowPoint.WorldCFrame.Position - Vector3.new(0, 3, 0)
-				spearPartA.CFrame = (CFrame.new(spearPartA.Position) * char:GetPivot().Rotation) * CFrame.Angles(0, math.rad(180), math.rad(90))
-				
-				spearPartB.Position = (spearPartA.Position + spearPartA.CFrame.LookVector*-167) + Vector3.new(0, 10, 0)		
+				spearPartA.CFrame = (CFrame.new(spearPartA.Position) * char:GetPivot().Rotation)
+					* CFrame.Angles(0, math.rad(180), math.rad(90))
+
+				spearPartB.Position = (spearPartA.Position + spearPartA.CFrame.LookVector * -167)
+					+ Vector3.new(0, 10, 0)
 			end)
 		end,
 	}
@@ -69,14 +70,18 @@ function ToolClient:Run()
 			local valid = toolActivated:InvokeServer(tool, config)
 
 			if valid then
-				if not config:GetAttribute("AnimationOn") then return end
+				if not config:GetAttribute("AnimationOn") then
+					return
+				end
 				local swingDirection = config:GetAttribute("SwingDirection")
 
 				local animationHeader = config:GetAttribute("AnimationHeader")
 				local animationTail = config:GetAttribute("AnimationTail")
 
-				local animation = animations:FindFirstChild(animationHeader..swingDirection..animationTail)
-				if not animation then return end
+				local animation = animations:FindFirstChild(animationHeader .. swingDirection .. animationTail)
+				if not animation then
+					return
+				end
 
 				animation = animator:LoadAnimation(animation)
 				animation:Play()
@@ -84,7 +89,9 @@ function ToolClient:Run()
 		end)
 
 		offhandCon = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-			if gameProcessed then return end
+			if gameProcessed then
+				return
+			end
 
 			if input.UserInputType == Enum.UserInputType.MouseButton2 then
 				local valid = toolOffhand:InvokeServer(tool, config, true)
@@ -100,7 +107,9 @@ function ToolClient:Run()
 		end)
 
 		offhandDiscon = UserInputService.InputEnded:Connect(function(input, gameProcessed)
-			if gameProcessed then return end
+			if gameProcessed then
+				return
+			end
 
 			if input.UserInputType == Enum.UserInputType.MouseButton2 then
 				local subCall = config:GetAttribute("SubClass")

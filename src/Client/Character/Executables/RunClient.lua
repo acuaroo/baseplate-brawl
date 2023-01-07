@@ -12,7 +12,9 @@ local RunClient = {}
 
 function RunClient:Run()
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then return end
+		if gameProcessed then
+			return
+		end
 
 		if humanoid.MoveDirection.Magnitude >= 0 then
 			if input.KeyCode == Enum.KeyCode.LeftShift then
@@ -22,7 +24,9 @@ function RunClient:Run()
 	end)
 
 	UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		if gameProcessed then return end
+		if gameProcessed then
+			return
+		end
 
 		if input.KeyCode == Enum.KeyCode.LeftShift then
 			sprint:FireServer(false)

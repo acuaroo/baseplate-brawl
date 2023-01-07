@@ -27,12 +27,12 @@ local rotationalOffset = CFrame.Angles(math.rad(-45), 0, math.rad(45))
 local toolSizeRatio = 6.24531601299
 
 local validKeyCodes = {
-	[Enum.KeyCode.One] = {1, Enum.KeyCode.One},
-	[Enum.KeyCode.Two] = {2, Enum.KeyCode.Two},
-	[Enum.KeyCode.Three] = {3, Enum.KeyCode.Three},
-	[Enum.KeyCode.Four] = {4, Enum.KeyCode.Four},
-	[Enum.KeyCode.Five] = {5, Enum.KeyCode.Five},
-	[Enum.KeyCode.Six] = {6, Enum.KeyCode.Six},
+	[Enum.KeyCode.One] = { 1, Enum.KeyCode.One },
+	[Enum.KeyCode.Two] = { 2, Enum.KeyCode.Two },
+	[Enum.KeyCode.Three] = { 3, Enum.KeyCode.Three },
+	[Enum.KeyCode.Four] = { 4, Enum.KeyCode.Four },
+	[Enum.KeyCode.Five] = { 5, Enum.KeyCode.Five },
+	[Enum.KeyCode.Six] = { 6, Enum.KeyCode.Six },
 }
 
 local activeTool = nil
@@ -45,19 +45,25 @@ function GuiClient:Run()
 
 	local function sortBackpack()
 		for index, tool in pairs(tools) do
-			local hotbarSlot = hotbarFrame["Slot"..index]
-			if not hotbarSlot then continue end
+			local hotbarSlot = hotbarFrame["Slot" .. index]
+			if not hotbarSlot then
+				continue
+			end
 
 			local viewport = hotbarSlot.ImageViewport
 			viewport.Visible = true
 			viewport:ClearAllChildren()
 
 			local toolVisual = tool:FindFirstChild("Build")
-			if not toolVisual then continue end
+			if not toolVisual then
+				continue
+			end
 
 			toolVisual = toolVisual:Clone()
-			
-			if not toolVisual.PrimaryPart then continue end
+
+			if not toolVisual.PrimaryPart then
+				continue
+			end
 			toolVisual:SetPrimaryPartCFrame(visualOffset)
 
 			local toolSettings = toolVisual:FindFirstChild("Settings")
@@ -77,7 +83,9 @@ function GuiClient:Run()
 				local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
 				viewportCamera.CFrame = customCameraCFrame
 			else
-				viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * toolSizeRatio))) * rotationalOffset
+				viewportCamera.CFrame = CFrame.new(
+					Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * toolSizeRatio))
+				) * rotationalOffset
 			end
 
 			viewportCamera.DiagonalFieldOfView = 0.7
@@ -117,7 +125,9 @@ function GuiClient:Run()
 	sortBackpack()
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then return end
+		if gameProcessed then
+			return
+		end
 
 		if validKeyCodes[input.KeyCode] then
 			local currentTool = tools[validKeyCodes[input.KeyCode][1]]
