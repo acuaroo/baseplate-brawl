@@ -131,6 +131,7 @@ local functionality = {
 			self._metaplayer.PrimaryState = "SLOW"
 			self._metaplayer:Changed()
 			
+			print("server is running!")
 			animRelay:FireClient(self.Owner, animationHeader.."Idle")
 		end
 	end,
