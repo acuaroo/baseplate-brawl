@@ -5,24 +5,28 @@
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      "$path": "src/ServerScriptService"
+      "$path": "src/Server"
     },
     "ServerStorage": {
       "$className": "ServerStorage",
-      "$ignoreUnknownInstances": true,
-      "$path": "src/ServerStorage"
+      "Modules": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "$path": "src/Modules"
+      },
+      "$ignoreUnknownInstances": true
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "src/StarterPlayer/StarterCharacterScripts"
+        "$path": "src/Client/Character"
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "src/StarterPlayer/StarterPlayerScripts"
+        "$path": "src/Client/Player"
       },
       "$ignoreUnknownInstances": true
     }
