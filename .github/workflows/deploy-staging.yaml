@@ -16,6 +16,7 @@ jobs:
           version: "^1.0.0"
           token: ${{ SECRETS.GITHUB_TOKEN }}
 
+      - run: foreman install
       - run: rojo build -o bsb-build.rbxl
 
       - name: Publish
