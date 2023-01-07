@@ -1,2 +1,4 @@
 [tools]
 rojo = { github = "rojo-rbx/rojo", branch = "master", version = "7.2.1" }
+selene = { github = "Kampfkarren/selene", branch = "master", version = "0.23.1" }
+stylua = { github = "JohnnyMorganz/StyLua", branch = "master", version = "0.15.3" }

@@ -35,8 +35,11 @@ end
 function DamageHandler:Indicate(hitLocus,  damage, isCrit)
 	local indicator = nil
 	
-	if isCrit then indicator = critIndicator:Clone() end
-	if not isCrit then indicator = hitIndicator:Clone() end
+	if isCrit then 
+		indicator = critIndicator:Clone()
+	else
+		indicator = hitIndicator:Clone()
+	end
 
 	indicator.Parent = hitLocus
 	indicator.Adornee = hitLocus
@@ -51,7 +54,7 @@ function DamageHandler:Indicate(hitLocus,  damage, isCrit)
 	task.spawn(indicatorTween, indicator)
 end
 
-function DamageHandler:Damage(player, enemyHumanoid, tool, config, indicate, hitLocus)
+function DamageHandler:Damage(player, enemyHumanoid, _, config, indicate, hitLocus)
 	local baseDamage = config:GetAttribute("BaseDamage")
 	local critChance = config:GetAttribute("CritChance")
 	local critMult = config:GetAttribute("CritMult")

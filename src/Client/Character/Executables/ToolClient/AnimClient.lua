@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ContentProvider = game:GetService("ContentProvider")
+--local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -17,11 +17,16 @@ animRelay.OnClientEvent:Connect(function(req, cancel, delTime, override)
 		local animation = animations:FindFirstChild(req)
 		
 		if not animation then return end
-		while character.Parent == nil do task.wait(); end
+		
+		while character.Parent == nil do
+			task.wait()
+		end
 		
 		local animLoaded = animator:LoadAnimation(animation)
 		
-		repeat task.wait() until animLoaded.Length > 0
+		repeat 
+			task.wait()
+		 until animLoaded.Length > 0
 		
 		if override then
 			animLoaded:Play()

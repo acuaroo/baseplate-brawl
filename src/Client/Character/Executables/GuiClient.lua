@@ -103,7 +103,7 @@ function GuiClient:Run()
 		if obj:IsA("Tool") and not table.find(tools, obj) then
 			local count = 0
 
-			for number, tool in pairs(tools) do
+			for _, tool in pairs(tools) do
 				count += 1
 				if tool == obj then
 					table.remove(tools, count)

@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local AnimClient = require(script:WaitForChild("AnimClient"))
+--local AnimClient = require(script:WaitForChild("AnimClient"))
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
@@ -24,28 +24,28 @@ local ToolClient = {}
 
 function ToolClient:Run()
 	local functionality = {
-		["throwSpear"] = function(character, _)
+		["throwSpear"] = function(char, _)
 			if spearCon then
 				spearCon:Disconnect()
 				spearCon = nil
 			end
 
-			if workspace:FindFirstChild(character.Name.."SpearVisual") then
-				workspace[character.Name.."SpearVisual"]:Destroy()
+			if workspace:FindFirstChild(char.Name.."SpearVisual") then
+				workspace[char.Name.."SpearVisual"]:Destroy()
 			end
 		end,
 	}
 
 
 	local init = {
-		["throwSpear"] = function(character, tool)
-			functionality["throwSpear"](character)
+		["throwSpear"] = function(char, tool)
+			functionality["throwSpear"](char)
 
 			local spearPartA = ReplicatedStorage["Assets"].SpearPartA:Clone()
 			local spearPartB = ReplicatedStorage["Assets"].SpearPartB:Clone()
 
 			local cache = Instance.new("Folder")
-			cache.Name = character.Name.."SpearVisual"
+			cache.Name = char.Name.."SpearVisual"
 			cache.Parent = workspace
 
 			local beam = spearPartA.Attachment.Beam
@@ -58,7 +58,7 @@ function ToolClient:Run()
 			
 			spearCon = RunService.RenderStepped:Connect(function()
 				spearPartA.Position = tool.Handle.ThrowPoint.WorldCFrame.Position - Vector3.new(0, 3, 0)
-				spearPartA.CFrame = (CFrame.new(spearPartA.Position) * character:GetPivot().Rotation) * CFrame.Angles(0, math.rad(180), math.rad(90))
+				spearPartA.CFrame = (CFrame.new(spearPartA.Position) * char:GetPivot().Rotation) * CFrame.Angles(0, math.rad(180), math.rad(90))
 				
 				spearPartB.Position = (spearPartA.Position + spearPartA.CFrame.LookVector*-167) + Vector3.new(0, 10, 0)		
 			end)
@@ -144,7 +144,7 @@ function ToolClient:Run()
 			local config = child.Config
 			local tool = child
 
-			toolPrep:FireServer(tool, config)	
+			toolPrep:FireServer(tool, config)
 
 			toolf(tool, config)
 		end

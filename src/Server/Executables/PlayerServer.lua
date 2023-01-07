@@ -133,14 +133,15 @@ Players.PlayerAdded:Connect(function(player)
 	
 	function playerTrace:ImposePrimary(status, enemy, duration)
 		if not PlayerServer[enemy] then return end
-		PlayerServer[enemy].PrimaryState = status; PlayerServer[enemy]:Changed()
+		PlayerServer[enemy].PrimaryState = status
+		PlayerServer[enemy]:Changed()
 		
 		if not duration then return end
 		
 		task.delay(duration, function()
 			if PlayerServer[enemy] then
-				PlayerServer[enemy].PrimaryState = "NONE"; PlayerServer[enemy]:Changed()
-
+				PlayerServer[enemy].PrimaryState = "NONE"
+				PlayerServer[enemy]:Changed()
 			end
 		end)
 	end

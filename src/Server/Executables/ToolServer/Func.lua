@@ -1,6 +1,5 @@
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
 
 local Melee = require(script.Parent.Melee)
 local Trove = require(ServerStorage["Modules"].Trove)
@@ -9,11 +8,7 @@ local DamageHandler = require(ServerStorage["Modules"].DamageHandler)
 local FastCast = require(ServerStorage["Modules"].FastCastRedux)
 local StatusHandler = require(ServerStorage["Modules"].StatusHandler)
 
-local combatAssets = ServerStorage["Assets"].Combat
-local shield = combatAssets.Shield
-
 local animRelay = ReplicatedStorage["Events"].AnimRelay
-local animations = ReplicatedStorage["Animations"]
 
 local Func = {}
 Func.__index = Func
@@ -46,7 +41,8 @@ local functionality = {
 			local humanoidRP = self.Owner.Character:FindFirstChild("HumanoidRootPart")
 			
 			if not humanoidRP then return end
-			self._metaplayer.PrimaryState = "NOMOVE"; self._metaplayer:Changed()
+			self._metaplayer.PrimaryState = "NOMOVE"
+			self._metaplayer:Changed()
 			
 			local config = self._config
 
@@ -84,24 +80,28 @@ local functionality = {
 			animRelay:FireClient(self.Owner, animationHeader.."Throw", nil, nil, animationHeader.."Idle")
 			
 			task.wait(animationDelay)
-			self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+			self._metaplayer.PrimaryState = "NONE"
+			self._metaplayer:Changed()
+
 			self.ThrowCaster:Fire(origin, direction, config:GetAttribute("ThrowPower"), self.ThrowCastBehavior)
 			
-			lenConnection = self.ThrowCaster.LengthChanged:Connect(function(cast, lastPoint, direction, length, velocity, spear)
+			lenConnection = self.ThrowCaster.LengthChanged:Connect(function(_, lastPoint, dir, length, _, spear)
 				if spear then 
 					local spearLength = spear.Size.Z/2
 					local offset = CFrame.new(0, 0, -(length - spearLength*2))
 
-					spear.CFrame = (CFrame.lookAt(lastPoint, lastPoint + direction):ToWorldSpace(offset)) * CFrame.Angles(math.rad(90), 0, math.rad(180))
+					spear.CFrame = (CFrame.lookAt(lastPoint, lastPoint + dir):ToWorldSpace(offset)) * CFrame.Angles(math.rad(90), 0, math.rad(180))
 				end
 			end)
 			
-			rayConnection = self.ThrowCaster.RayHit:Connect(function(cast, result, velocity, spear)
+			rayConnection = self.ThrowCaster.RayHit:Connect(function(_, result, _, spear)
 				local hit = result.Instance
 				local echaracter = hit.Parent
 				
 				if not echaracter:FindFirstChild("Humanoid") then
-					pcall(function() echaracter = echaracter.Parent end)
+					pcall(function()
+						echaracter = echaracter.Parent
+					end)
 				end
 				
 				if echaracter and echaracter:FindFirstChild("Humanoid") then
@@ -120,12 +120,16 @@ local functionality = {
 			
 
 			task.delay(config:GetAttribute("SpearReturnTime"), function()
-				if not cleaned then cleanup(rayConnection, lenConnection) end
+				if not cleaned then
+					cleanup(rayConnection, lenConnection)
+				end
 			end)
 		else
 			local config = self._config
 			local animationHeader = config:GetAttribute("AnimationHeader")
-			self._metaplayer.PrimaryState = "SLOW"; self._metaplayer:Changed()
+			
+			self._metaplayer.PrimaryState = "SLOW"
+			self._metaplayer:Changed()
 			
 			animRelay:FireClient(self.Owner, animationHeader.."Idle")
 		end

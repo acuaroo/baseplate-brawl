@@ -48,12 +48,13 @@ function ToolServer:Run()
 		local tool = toolCheck(player, toolobj)
 		if not tool then return false end
 
-		MetaPlayers[player].PrimaryState = "NONE"; MetaPlayers[player]:Changed()
+		MetaPlayers[player].PrimaryState = "NONE"
+		MetaPlayers[player]:Changed()
 		tool:Cleanup()
 	end)
 
 
-	toolActivated.OnServerInvoke = function(player, toolobj, config)
+	toolActivated.OnServerInvoke = function(player, toolobj, _)
 		local tool = toolCheck(player, toolobj)
 		
 		if not tool then return false end
@@ -66,7 +67,7 @@ function ToolServer:Run()
 		return true
 	end
 
-	toolOffhand.OnServerInvoke = function(player, toolobj, config, enable)
+	toolOffhand.OnServerInvoke = function(player, toolobj, _, enable)
 		local tool = toolCheck(player, toolobj)
 
 		if not tool then return false end

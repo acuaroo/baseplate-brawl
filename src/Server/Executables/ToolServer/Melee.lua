@@ -8,7 +8,7 @@ local ClientCast = require(ServerStorage["Modules"].ClientCast)
 local DamageHandler = require(ServerStorage["Modules"].DamageHandler)
 
 local combatAssets = ServerStorage["Assets"].Combat
-local shield = combatAssets.Shield
+local shieldAsset = combatAssets.Shield
 
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local animations = ReplicatedStorage["Animations"]
@@ -21,8 +21,15 @@ Melee.__index = Melee
 setmetatable(Melee, Tool)
 
 local function flip(animSide)
-	if animSide == "L" then animSide = "R"; return animSide end
-	if animSide == "R" then animSide = "L"; return animSide end
+	if animSide == "L" then
+		animSide = "R"
+		return animSide
+	end
+
+	if animSide == "R" then
+		animSide = "L"
+		return animSide
+	end
 end
 
 local function cleanShields(self, character, animationHeader)
@@ -31,7 +38,9 @@ local function cleanShields(self, character, animationHeader)
 
 	animRelay:FireClient(self.Owner, animationHeader.."Offhand", true)
 
-	self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+	self._metaplayer.PrimaryState = "NONE"
+	self._metaplayer:Changed()
+
 	shield:Destroy()
 	self:OffDebounce("OffDebounceTime")
 end
@@ -98,7 +107,8 @@ function Melee:Debounce(address)
 		self:CleanCast()
 		
 		if self._metaplayer then
-			self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+			self._metaplayer.PrimaryState = "NONE"
+			self._metaplayer:Changed()
 		end
 	end)
 end
@@ -115,7 +125,8 @@ function Melee:OffDebounce(address)
 		self:CleanOff()
 		
 		if self._metaplayer then
-			self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+			self._metaplayer.PrimaryState = "NONE"
+			self._metaplayer:Changed()
 		end
 	end)
 end
@@ -147,7 +158,8 @@ function Melee:Activate()
 		address = animationHeader..flippedDirection..animationTail
 	end
 	
-	self._metaplayer.PrimaryState = "ATTACKING"; self._metaplayer:Changed()
+	self._metaplayer.PrimaryState = "ATTACKING"
+	self._metaplayer:Changed()
 	
 	self._castConnection = self.Caster.HumanoidCollided:Connect(function(ray, humanoid)
 		if self.quickDebounce[humanoid] or not self._meleeValid then return end
@@ -196,7 +208,9 @@ function Melee:Shield(animationHeader, shield)
 	self._meleeValid = false
 	
 	if not shield then return end
-	if shield.Name == "Box" then shield = shield.Parent end
+	if shield.Name == "Box" then
+		shield = shield.Parent
+	end
 
 	if self.shieldDebounce[shield] then return end
 	self.shieldDebounce[shield] = true
@@ -205,16 +219,16 @@ function Melee:Shield(animationHeader, shield)
 	local knockPower = shield:GetAttribute("KnockPower")
 	local knockDuration = shield:GetAttribute("KnockDuration")
 	local platformDuration = shield:GetAttribute("PlatformDuration")
-	local stunDuration = shield:GetAttribute("StunDuration")
 
 	shieldHealth -= 1
 
 	local character = self.Owner.Character
 	local humanoidRP = character:FindFirstChild("HumanoidRootPart")
-	local humanoid = character:FindFirstChild("Humanoid")
 
 	if shieldHealth <= 0 then
-		self._metaplayer.PrimaryState = "STUN"; self._metaplayer:Changed()
+		self._metaplayer.PrimaryState = "STUN"
+		self._metaplayer:Changed()
+
 		local enemy = Players:GetPlayerFromCharacter(shield.Parent)
 
 		if enemy then
@@ -239,7 +253,7 @@ function Melee:Shield(animationHeader, shield)
 		attachment.Name = "SHIELDATT"
 
 		local knockback = self._trove:Add(Instance.new("LinearVelocity"))
-		knockback.Attachment0 = attachment				
+		knockback.Attachment0 = attachment
 		knockback.MaxForce = math.huge
 		knockback.Parent = attachment
 		knockback.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
@@ -251,7 +265,8 @@ function Melee:Shield(animationHeader, shield)
 			task.wait(platformDuration)
 			self._meleeValid = true
 			animRelay:FireClient(self.Owner, "Stun", true)
-			self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+			self._metaplayer.PrimaryState = "NONE"
+			self._metaplayer:Changed()
 		end)
 	end
 end
@@ -267,7 +282,7 @@ function Melee:Offhand(enable)
 		local pState = self._metaplayer.PrimaryState
 		if self._metaplayer.MovementState == "RUNNING" or pState == "GRAB" or pState == "ATTACKING" or pState == "STUN" or pState == "SLOW" then return end
 		
-		local newShield = self._trove:Add(shield:Clone())
+		local newShield = self._trove:Add(shieldAsset:Clone())
 		newShield.Parent = character
 		newShield.CFrame = (humanoidRP.CFrame * CFrame.new(0, 0, -2)) * CFrame.Angles(math.rad(90), 0, math.rad(180))
 
@@ -276,7 +291,9 @@ function Melee:Offhand(enable)
 		shieldWeld.Part0 = newShield
 		shieldWeld.Part1 = humanoidRP
 		
-		self._metaplayer.PrimaryState = "SLOW"; self._metaplayer:Changed()
+		self._metaplayer.PrimaryState = "SLOW"
+		self._metaplayer:Changed()
+
 		animRelay:FireClient(self.Owner, animationHeader.."Offhand")
 	else
 		local shield = character:FindFirstChild("Shield")
@@ -284,7 +301,8 @@ function Melee:Offhand(enable)
 		
 		animRelay:FireClient(self.Owner, animationHeader.."Offhand", true)
 		
-		self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+		self._metaplayer.PrimaryState = "NONE"
+		self._metaplayer:Changed()
 		
 		shield:Destroy()
 		self:OffDebounce("OffDebounceTime")
@@ -309,7 +327,8 @@ function Melee:Destroy()
 	self:CleanOff()
 
 	if self._metaplayer then
-		self._metaplayer.PrimaryState = "NONE"; self._metaplayer:Changed()
+		self._metaplayer.PrimaryState = "NONE"
+		self._metaplayer:Changed()
 	end
 end
 
