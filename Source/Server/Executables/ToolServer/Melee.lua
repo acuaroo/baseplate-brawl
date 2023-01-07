@@ -228,6 +228,9 @@ function Melee:Shield(animationHeader, shield)
 	local knockDuration = shield:GetAttribute("KnockDuration")
 	local platformDuration = shield:GetAttribute("PlatformDuration")
 
+	local flippedDirection = flip(self._config:GetAttribute("SwingDirection"))
+	local animHeaderOwner = self._config:GetAttribute("AnimationHeader")
+
 	shieldHealth -= 1
 
 	local character = self.Owner.Character
@@ -256,6 +259,8 @@ function Melee:Shield(animationHeader, shield)
 		end
 
 		shield:Destroy()
+
+		animRelay:FireClient(self.Owner, animHeaderOwner .. flippedDirection .. "Swing", true)
 		animRelay:FireClient(self.Owner, "Stun")
 
 		local attachment = self._trove:Add(Instance.new("Attachment"))
