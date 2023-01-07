@@ -16,7 +16,7 @@ jobs:
           version: "^1.0.0"
           token: ${{ SECRETS.GITHUB_TOKEN }}
 
-        
+      - run: rojo build -o bsb-build.rbxl
 
       - name: Publish
         shell: bash
@@ -25,6 +25,5 @@ jobs:
           PID: 11963092817
           API_KEY: ${{ secrets.DEVKEY }}
           FILE: bsb-build.rbxl
-        
-        run: rojo build -o bsb-build.rbxl
+
         run: rbxcloud experience publish -a "$API_KEY" -u "$UID" -p "$PID" -t published -f "$FILE"
