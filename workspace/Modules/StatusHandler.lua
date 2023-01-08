@@ -1,5 +1,8 @@
 local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
+local notificationChannel = ReplicatedStorage["Events"].Notification
 local particleHolder = ServerStorage["Assets"].Particles.ParticleHolder
 
 local subEffects = {
@@ -48,6 +51,33 @@ local statusEffects = {
 		subEffects["normalEffect"](humanoid, duration, "Speed", -0.1)
 
 		subEffects["particleEffect"](humanoid, duration, "Curse")
+
+		local player = Players:GetPlayerFromCharacter(humanoid.Parent)
+
+		if player then
+			notificationChannel:FireClient(player, {
+				"cursed!",
+				"you've been cursed, you feel weaker and more vulnerable",
+				"rbxassetid://10590477428",
+				4,
+			}, true)
+		end
+	end,
+	["BrokenBone"] = function(humanoid, duration)
+		subEffects["normalEffect"](humanoid, duration, "Regeneration", -0.5)
+		subEffects["normalEffect"](humanoid, duration, "Speed", -0.3)
+		subEffects["normalEffect"](humanoid, duration, "Stamina", -0.3)
+
+		local player = Players:GetPlayerFromCharacter(humanoid.Parent)
+
+		if player then
+			notificationChannel:FireClient(player, {
+				"ouch!",
+				"you've broken a bone, you feel slower and more vulnerable",
+				"rbxassetid://10590477428",
+				4,
+			}, true)
+		end
 	end,
 }
 

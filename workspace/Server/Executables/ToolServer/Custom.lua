@@ -5,7 +5,8 @@ local TweenService = game:GetService("TweenService")
 local Tool = require(script.Parent.Tool)
 local Trove = require(ServerStorage["Modules"].Trove)
 --local ClientCast = require(ServerStorage["Modules"].ClientCast)
---local DamageHandler = require(ServerStorage["Modules"].DamageHandler)
+local DamageHandler = require(ServerStorage["Modules"].DamageHandler)
+local StatusHandler = require(ServerStorage["Modules"].StatusHandler)
 
 local combatAssets = ServerStorage["Assets"].Combat
 local meteor = combatAssets.Meteor
@@ -22,6 +23,9 @@ local activate = {
 		local range = self._config:GetAttribute("Range")
 		local lifeTime = self._config:GetAttribute("LifeTime")
 
+		self._metaplayer.PrimaryState = "NOMOVE"
+		self._metaplayer:Changed()
+
 		if not humanoidRP or not mousePosition then
 			return
 		end
@@ -34,6 +38,26 @@ local activate = {
 		local meteorClone = self._trove:Add(meteor:Clone())
 		meteorClone.Parent = workspace
 		meteorClone.CFrame = CFrame.new(mousePosition) + Vector3.new(0, 50, 0)
+		local humanoidList = {}
+
+		local meteorConnection = meteorClone.Touched:Connect(function(obj)
+			local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
+
+			if humanoid and not humanoidList[humanoid] then
+				humanoidList[humanoid] = true
+
+				DamageHandler:Damage(
+					self.Owner,
+					humanoid,
+					self._tool,
+					self._config,
+					true,
+					humanoid.Parent:FindFirstChild("HumanoidRootPart")
+				)
+
+				StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
+			end
+		end)
 
 		local warningClone = self._trove:Add(warning:Clone())
 		warningClone.Parent = workspace
@@ -48,7 +72,17 @@ local activate = {
 
 		meteorClone.Anchored = false
 
-		task.delay(lifeTime, function()
+		task.delay(lifeTime / 2, function()
+			self._metaplayer.PrimaryState = "NONE"
+			self._metaplayer:Changed()
+
+			task.wait(lifeTime / 2)
+
+			if meteorConnection then
+				meteorConnection:Disconnect()
+				meteorConnection = nil
+			end
+
 			meteorClone:Destroy()
 			warningClone:Destroy()
 		end)

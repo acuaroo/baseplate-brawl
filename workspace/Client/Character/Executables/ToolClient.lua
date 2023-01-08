@@ -84,13 +84,18 @@ function ToolClient:Run()
 					return
 				end
 				local swingDirection = config:GetAttribute("SwingDirection")
-
+				local animationPause = config:GetAttribute("AnimationPause")
 				local animationHeader = config:GetAttribute("AnimationHeader")
 				local animationTail = config:GetAttribute("AnimationTail")
-
 				local animation = animations:FindFirstChild(animationHeader .. swingDirection .. animationTail)
+
 				if not animation then
 					return
+				end
+
+				if animationPause then
+					task.wait(animationPause)
+					print("cont")
 				end
 
 				animation = animator:LoadAnimation(animation)

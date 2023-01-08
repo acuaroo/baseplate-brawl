@@ -22,6 +22,7 @@ Players.PlayerAdded:Connect(function(player)
 	playerTrace._player = player
 	playerTrace._trove = Trove.new()
 	playerTrace._restam = false
+	playerTrace.StaminaRegen = 1
 
 	local replFolder = playerTrace._trove:Add(Instance.new("Folder"))
 	replFolder.Parent = player
@@ -70,6 +71,7 @@ Players.PlayerAdded:Connect(function(player)
 				return
 			end
 
+			self.MovementState = "WALKING"
 			humanoid.WalkSpeed = 0
 		elseif self.PrimaryState == "STUNLOCK" then
 			local humanoid = player.Character:FindFirstChild("Humanoid")
@@ -121,7 +123,7 @@ Players.PlayerAdded:Connect(function(player)
 		playerTrace._restam = true
 
 		repeat
-			self.Stamina += 1
+			self.Stamina += self.StaminaRegen
 			staminaReplicate.Value = self.Stamina
 			task.wait(0.05)
 		until self.Stamina == 200 or self.MovementState == "RUNNING"
@@ -177,12 +179,14 @@ Players.PlayerAdded:Connect(function(player)
 	end
 
 	local changeCache = nil
+	local changeCacheStam = nil
 
 	player.CharacterAdded:Connect(function(character)
 		local humanoid = character:WaitForChild("Humanoid")
 
 		humanoid:SetAttribute("Speed", 0)
 		humanoid:SetAttribute("Regeneration", 100)
+		humanoid:SetAttribute("Stamina", 1)
 
 		humanoid:GetAttributeChangedSignal("Speed"):Connect(function()
 			if humanoid:GetAttribute("Speed") == 0 and changeCache then
@@ -190,6 +194,15 @@ Players.PlayerAdded:Connect(function(player)
 			else
 				changeCache = (humanoid.WalkSpeed * humanoid:GetAttribute("Speed"))
 				humanoid.WalkSpeed += changeCache
+			end
+		end)
+
+		humanoid:GetAttributeChangedSignal("Stamina"):Connect(function()
+			if humanoid:GetAttribute("Stamina") == 0 and changeCache then
+				playerTrace.StaminaRegen -= changeCache
+			else
+				changeCacheStam = (playerTrace.StaminaRegen * humanoid:GetAttribute("Stamina"))
+				playerTrace.StaminaRegen += changeCacheStam
 			end
 		end)
 	end)

@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -10,6 +11,12 @@ local playerGui = player.PlayerGui
 local hotbarGui = playerGui.Hotbar
 local statsFrame = hotbarGui.StatsFrame
 local hotbarFrame = statsFrame.HotbarFrame
+
+local notificationChannel = ReplicatedStorage["Events"].Notification
+
+local notifications = playerGui.Notifications
+local notificationMain = notifications.NotificationMain
+local notificationOpp = notifications.NotificationOpp
 
 local totalHealth = statsFrame.Health.TotalHealth
 local currentHealth = totalHealth.CurrentHealth
@@ -159,6 +166,58 @@ function GuiClient:Run()
 		local newPos = math.clamp((humanoid.Health / maxHealth), 0, maxHealth)
 
 		currentHealth:TweenSize(UDim2.new(newPos, 0, 1, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.1)
+	end)
+
+	notificationChannel.OnClientEvent:Connect(function(args, opp)
+		if not opp then
+			local frame = notificationMain.Notification
+			frame.Title.Text = args[1]
+			frame.Description.Text = args[2]
+			frame.Icon.Image = args[3]
+
+			frame.Position = UDim2.new(3, 0, 0.05, 0)
+			frame:TweenPosition(
+				UDim2.new(0.18, 0, 0.05, 0),
+				Enum.EasingDirection.In,
+				Enum.EasingStyle.Linear,
+				0.5,
+				true
+			)
+
+			task.delay(args[4], function()
+				frame:TweenPosition(
+					UDim2.new(3, 0, 0.05, 0),
+					Enum.EasingDirection.In,
+					Enum.EasingStyle.Linear,
+					0.5,
+					true
+				)
+			end)
+		else
+			local frame = notificationOpp.Notification
+			frame.Title.Text = args[1]
+			frame.Description.Text = args[2]
+			frame.Icon.Image = args[3]
+
+			frame.Position = UDim2.new(-3, 0, 0.05, 0)
+			frame:TweenPosition(
+				UDim2.new(0.03, 0, 0.05, 0),
+				Enum.EasingDirection.In,
+				Enum.EasingStyle.Linear,
+				0.5,
+				true
+			)
+
+			task.delay(args[4], function()
+				frame:TweenPosition(
+					UDim2.new(-3, 0, 0.05, 0),
+					Enum.EasingDirection.In,
+					Enum.EasingStyle.Linear,
+					0.5,
+					true
+				)
+			end)
+		end
 	end)
 end
 
