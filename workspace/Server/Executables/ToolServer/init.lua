@@ -6,12 +6,14 @@ local MetaPlayers = require(script.Parent.PlayerServer)
 local ClassList = {
 	["Melee"] = require(script.Melee),
 	["Func"] = require(script.Func),
+	["Custom"] = require(script.Custom),
 }
 
 local toolPrep = ReplicatedStorage["Events"].ToolPrep
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local toolActivated = ReplicatedStorage["Events"].ToolActivated
 local toolOffhand = ReplicatedStorage["Events"].ToolOffhand
+local toolAbility = ReplicatedStorage["Events"].ToolAbility
 
 local toolPrepTable = {}
 local ToolServer = {}
@@ -28,8 +30,7 @@ function ToolServer:Run()
 		if toolPrepTable[player][toolobj.Name] then
 			local tool = toolPrepTable[player][toolobj.Name]
 
-			tool:CleanCast()
-			tool:CleanOff()
+			tool:Cleanup()
 
 			return
 		end
@@ -57,7 +58,31 @@ function ToolServer:Run()
 		tool:Cleanup()
 	end)
 
-	toolActivated.OnServerInvoke = function(player, toolobj, _)
+	toolAbility.OnServerInvoke = function(player, toolobj, _, playerData)
+		local tool = toolCheck(player, toolobj)
+
+		if not tool then
+			return false
+		end
+		if tool.AbilityDebouncing then
+			return false
+		end
+		if MetaPlayers[player].PrimaryState == "STUN" then
+			return false
+		end
+		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
+			return false
+		end
+		if not tool._config:GetAttribute("Ability") then
+			return false
+		end
+
+		tool:Ability(playerData)
+
+		return true
+	end
+
+	toolActivated.OnServerInvoke = function(player, toolobj, _, args)
 		local tool = toolCheck(player, toolobj)
 
 		if not tool then
@@ -73,7 +98,7 @@ function ToolServer:Run()
 			return false
 		end
 
-		tool:Activate()
+		tool:Activate(args)
 
 		return true
 	end

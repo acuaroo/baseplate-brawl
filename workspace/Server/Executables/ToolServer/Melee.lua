@@ -342,6 +342,9 @@ function Melee:Cleanup()
 	animRelay:FireClient(self.Owner, animationHeader .. "L" .. animationTail, true)
 	animRelay:FireClient(self.Owner, animationHeader .. "R" .. animationTail, true)
 
+	self:CleanCast()
+	self:CleanOff()
+
 	cleanShields(self, self.Owner.Character, animationHeader)
 end
 

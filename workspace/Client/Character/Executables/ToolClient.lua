@@ -7,6 +7,7 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local animator = humanoid.Animator
+local mouse = player:GetMouse()
 
 local toolPrep = ReplicatedStorage["Events"].ToolPrep
 local toolActivated = ReplicatedStorage["Events"].ToolActivated
@@ -67,7 +68,16 @@ function ToolClient:Run()
 
 	local function toolf(tool, config)
 		activatedCon = tool.Activated:Connect(function()
-			local valid = toolActivated:InvokeServer(tool, config)
+			local valid = nil
+			if config:GetAttribute("Ability") then
+				local args = {
+					mouse.Hit.Position,
+				}
+
+				valid = toolActivated:InvokeServer(tool, config, args)
+			else
+				valid = toolActivated:InvokeServer(tool, config)
+			end
 
 			if valid then
 				if not config:GetAttribute("AnimationOn") then
