@@ -14,6 +14,7 @@ local animRelay = ReplicatedStorage["Events"].AnimRelay
 local toolActivated = ReplicatedStorage["Events"].ToolActivated
 local toolOffhand = ReplicatedStorage["Events"].ToolOffhand
 local toolAbility = ReplicatedStorage["Events"].ToolAbility
+local notificationChannel = ReplicatedStorage["Events"].Notification
 
 local toolPrepTable = {}
 local ToolServer = {}
@@ -29,9 +30,7 @@ function ToolServer:Run()
 	toolPrep.OnServerEvent:Connect(function(player, toolobj, config)
 		if toolPrepTable[player][toolobj.Name] then
 			local tool = toolPrepTable[player][toolobj.Name]
-
 			tool:Cleanup()
-
 			return
 		end
 
@@ -43,8 +42,14 @@ function ToolServer:Run()
 		end
 
 		local tool = route.new(player, toolobj, config, MetaPlayers[player])
-
 		toolPrepTable[player][toolobj.Name] = tool
+
+		notificationChannel:FireClient(player, {
+			toolobj:GetAttribute("Title"),
+			toolobj:GetAttribute("Description"),
+			toolobj:GetAttribute("Image"),
+			true,
+		}, false)
 	end)
 
 	animRelay.OnServerEvent:Connect(function(player, toolobj)
@@ -56,6 +61,13 @@ function ToolServer:Run()
 		MetaPlayers[player].PrimaryState = "NONE"
 		MetaPlayers[player]:Changed()
 		tool:Cleanup()
+
+		notificationChannel:FireClient(player, {
+			toolobj:GetAttribute("Title"),
+			toolobj:GetAttribute("Description"),
+			toolobj:GetAttribute("Image"),
+			false,
+		}, false)
 	end)
 
 	toolAbility.OnServerInvoke = function(player, toolobj, _, playerData)

@@ -24,7 +24,7 @@ local ProfileService = require(ServerStorage["Modules"].ProfileService)
 
 local toolFolder = ServerStorage["Assets"].Tools
 
-local currentHash = "G@D7SZCWSnx$dF^?"
+local currentHash = "G@D7SZ"
 local defaultTemplate = {
 	souls = 0,
 	tools = {
@@ -163,7 +163,6 @@ end
 function DataServer:RemoveTool(player, tool)
 	if Profiles[player] then
 		local profileTool = Profiles[player].Data.tools[tool]
-
 		if not profileTool then
 			warn("[DATA] " .. player.Name .. " tried to remove a nil tool :", tool)
 			return

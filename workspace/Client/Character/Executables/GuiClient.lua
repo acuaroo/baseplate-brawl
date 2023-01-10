@@ -26,7 +26,12 @@ local currentStamina = totalStamina.CurrentStamina
 local lowStamina = Color3.fromRGB(255, 116, 118)
 local normalStamina = Color3.fromRGB(162, 220, 162)
 
+local soulCount = statsFrame.Souls.TextLabel
+local souls = player:WaitForChild("leaderstats").souls
 local staminaReplicate = player:WaitForChild("REPLICATEVALS").STAMINA
+
+local statusFrame = statsFrame.Status
+local statusTemplate = statusFrame.UIListLayout.Status
 
 local tools = backpack:GetChildren()
 local visualOffset = CFrame.new(Vector3.new(0, 1.5, 0), Vector3.new(0, 0, 50))
@@ -42,9 +47,61 @@ local validKeyCodes = {
 	[Enum.KeyCode.Six] = { 6, Enum.KeyCode.Six },
 }
 
+local statusLookup = {
+	["DamageIntake"] = {
+		["Image"] = "rbxassetid://9197335628",
+	},
+	["DamageOutput"] = {
+		["Image"] = "rbxassetid://131882405",
+	},
+	["Regeneration"] = {
+		["Image"] = "rbxassetid://1082043059",
+	},
+	["Stamina"] = {
+		["Image"] = "rbxassetid://1265939968",
+	},
+	["Speed"] = {
+		["Image"] = "rbxassetid://5897389631",
+	},
+}
+
+local activeStatuses = {}
 local activeTool = nil
 
 local GuiClient = {}
+
+local function addStatus(statusName)
+	if not statusLookup[statusName] then
+		return
+	end
+	if #activeStatuses >= 5 then
+		return
+	end
+	if activeStatuses[statusName] then
+		return
+	end
+
+	local newTemplate: ImageButton = statusTemplate:Clone()
+	newTemplate.Parent = statusFrame
+	newTemplate.Image = statusLookup[statusName]["Image"]
+	newTemplate.Visible = true
+
+	activeStatuses[statusName] = newTemplate
+end
+
+local function removeStatus(statusName)
+	if not statusLookup[statusName] then
+		return
+	end
+
+	if not activeStatuses[statusName] then
+		return
+	end
+
+	local newTemplate = activeStatuses[statusName]
+	newTemplate:Destroy()
+	activeStatuses[statusName] = nil
+end
 
 function GuiClient:Run()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
@@ -168,7 +225,44 @@ function GuiClient:Run()
 		currentHealth:TweenSize(UDim2.new(newPos, 0, 1, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.1)
 	end)
 
+	humanoid.AttributeChanged:Connect(function(attribute)
+		local val = humanoid:GetAttribute(attribute)
+
+		if attribute == "Regeneration" and val == 100 then
+			removeStatus(attribute)
+			return
+		end
+
+		if attribute == "Speed" and val == 0 then
+			removeStatus(attribute)
+			return
+		end
+
+		if attribute == "Stamina" and val == 1 then
+			removeStatus(attribute)
+			return
+		end
+
+		if val then
+			addStatus(attribute)
+		else
+			removeStatus(attribute)
+		end
+	end)
+
+	soulCount.Text = souls.Value
+	souls.Changed:Connect(function()
+		soulCount.Text = souls.Value
+	end)
+
 	notificationChannel.OnClientEvent:Connect(function(args, opp)
+		if args[4] == false then
+			local frame = notificationMain.Notification
+
+			frame:TweenPosition(UDim2.new(3, 0, 0.05, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.5, true)
+			return
+		end
+
 		if not opp then
 			local frame = notificationMain.Notification
 			frame.Title.Text = args[1]
@@ -183,6 +277,10 @@ function GuiClient:Run()
 				0.5,
 				true
 			)
+
+			if args[4] == true then
+				return
+			end
 
 			task.delay(args[4], function()
 				frame:TweenPosition(
