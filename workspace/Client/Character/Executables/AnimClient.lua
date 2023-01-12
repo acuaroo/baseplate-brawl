@@ -1,3 +1,13 @@
+--[[
+
+	AnimClient:Run()
+	-- starts up animclient
+	
+	animRelay.OnClientEvent(req, cancel, delTime, override)
+	-- server can request client to play animation
+
+]]
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
