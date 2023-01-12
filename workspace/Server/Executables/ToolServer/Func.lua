@@ -1,3 +1,7 @@
+--[[
+	-- inherited from melee
+]]
+
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -43,8 +47,7 @@ local functionality = {
 			if not humanoidRP then
 				return
 			end
-			self._metaplayer.PrimaryState = "NOMOVE"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("NOMOVE")
 
 			local config = self._config
 
@@ -82,8 +85,7 @@ local functionality = {
 			animRelay:FireClient(self.Owner, animationHeader .. "Throw", nil, nil, animationHeader .. "Idle")
 
 			task.wait(animationDelay)
-			self._metaplayer.PrimaryState = "NONE"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("NONE")
 
 			self.ThrowCaster:Fire(origin, direction, config:GetAttribute("ThrowPower"), self.ThrowCastBehavior)
 
@@ -138,8 +140,7 @@ local functionality = {
 			local config = self._config
 			local animationHeader = config:GetAttribute("AnimationHeader")
 
-			self._metaplayer.PrimaryState = "SLOW"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("SLOW")
 
 			animRelay:FireClient(self.Owner, animationHeader .. "Idle")
 		end

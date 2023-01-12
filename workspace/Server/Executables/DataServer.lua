@@ -1,22 +1,21 @@
 --[[
 
-DataServer:GetProfile(player)
--- returns the profile of the player
+	DataServer:GetProfile(player)
+	-- returns the profile of the player
 
-DataServer:IncrementSouls(player, amt (+/-))
--- increments the souls of the player
+	DataServer:IncrementSouls(player, amt (+/-))
+	-- increments the souls of the player
 
-DataServer:AddTool(player, tool { name = String, equipped = Boolean })
--- adds a tool to the player's inventory
+	DataServer:AddTool(player, tool { name = String, equipped = Boolean })
+	-- adds a tool to the player's inventory
 
-DataServer:RemoveTool(player, toolName)
--- removes a tool from the player's inventory
+	DataServer:RemoveTool(player, toolName)
+	-- removes a tool from the player's inventory
 
-DataServer:EquipSetTool(player, tool, equipped)
--- set the equipped status of a tool
+	DataServer:EquipSetTool(player, tool, equipped)
+	-- set the equipped status of a tool
 
 ]]
---
 
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")

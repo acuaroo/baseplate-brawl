@@ -58,8 +58,7 @@ function ToolServer:Run()
 			return false
 		end
 
-		MetaPlayers[player].PrimaryState = "NONE"
-		MetaPlayers[player]:Changed()
+		MetaPlayers[player]:SetPrimary("NONE")
 		tool:Cleanup()
 
 		notificationChannel:FireClient(player, {

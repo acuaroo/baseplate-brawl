@@ -1,3 +1,30 @@
+--[[
+
+	Melee:CleanCast(&self&)
+	-- cleans the cast connection for given melee
+
+	Melee:CleanOff(&self&)
+	-- cleans the offhand connection for given melee (typically shield)
+
+	Melee:Debounce(&self&, address)
+	-- debounces the given melee by the amount at self._config:GetAtt(address)
+
+	Melee:OffDebounce(&self&, address)
+	-- debounces the given melee's offhand by the amount at self._config:GetAtt(address)
+
+	Melee:Activate(&self&)
+	-- activates the given melee
+
+	Melee:Offhand(&self&)
+	-- activates the given melee
+
+	Melee:Cleanup(&self&)
+	-- cleans the given melee
+
+	Melee:Shield(&self&, animationHeader, shield)
+	-- creates/destroys a shield for the given melee
+]]
+
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -40,8 +67,7 @@ local function cleanShields(self, character, animationHeader)
 
 	animRelay:FireClient(self.Owner, animationHeader .. "Offhand", true)
 
-	self._metaplayer.PrimaryState = "NONE"
-	self._metaplayer:Changed()
+	self._metaplayer:SetPrimary("NONE")
 
 	shield:Destroy()
 	self:OffDebounce("OffDebounceTime")
@@ -109,8 +135,7 @@ function Melee:Debounce(address)
 		self:CleanCast()
 
 		if self._metaplayer then
-			self._metaplayer.PrimaryState = "NONE"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("NONE")
 		end
 	end)
 end
@@ -127,8 +152,7 @@ function Melee:OffDebounce(address)
 		self:CleanOff()
 
 		if self._metaplayer then
-			self._metaplayer.PrimaryState = "NONE"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("NONE")
 		end
 	end)
 end
@@ -160,8 +184,7 @@ function Melee:Activate()
 		address = animationHeader .. flippedDirection .. animationTail
 	end
 
-	self._metaplayer.PrimaryState = "ATTACKING"
-	self._metaplayer:Changed()
+	self._metaplayer:SetPrimary("ATTACKING")
 
 	self._castConnection = self.Caster.HumanoidCollided:Connect(function(ray, humanoid)
 		if self.quickDebounce[humanoid] or not self._meleeValid then
@@ -237,8 +260,7 @@ function Melee:Shield(animationHeader, shield)
 	local humanoidRP = character:FindFirstChild("HumanoidRootPart")
 
 	if shieldHealth <= 0 then
-		self._metaplayer.PrimaryState = "STUN"
-		self._metaplayer:Changed()
+		self._metaplayer:SetPrimary("STUN")
 
 		local enemy = Players:GetPlayerFromCharacter(shield.Parent)
 
@@ -280,8 +302,7 @@ function Melee:Shield(animationHeader, shield)
 			task.wait(platformDuration)
 			self._meleeValid = true
 			animRelay:FireClient(self.Owner, "Stun", true)
-			self._metaplayer.PrimaryState = "NONE"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("NONE")
 		end)
 	end
 end
@@ -314,8 +335,7 @@ function Melee:Offhand(enable)
 		shieldWeld.Part0 = newShield
 		shieldWeld.Part1 = humanoidRP
 
-		self._metaplayer.PrimaryState = "SLOW"
-		self._metaplayer:Changed()
+		self._metaplayer:SetPrimary("SLOW")
 
 		animRelay:FireClient(self.Owner, animationHeader .. "Offhand")
 	else
@@ -326,8 +346,7 @@ function Melee:Offhand(enable)
 
 		animRelay:FireClient(self.Owner, animationHeader .. "Offhand", true)
 
-		self._metaplayer.PrimaryState = "NONE"
-		self._metaplayer:Changed()
+		self._metaplayer:SetPrimary("NONE")
 
 		shield:Destroy()
 		self:OffDebounce("OffDebounceTime")
@@ -355,8 +374,7 @@ function Melee:Destroy()
 	self:CleanOff()
 
 	if self._metaplayer then
-		self._metaplayer.PrimaryState = "NONE"
-		self._metaplayer:Changed()
+		self._metaplayer:SetPrimary("NONE")
 	end
 end
 

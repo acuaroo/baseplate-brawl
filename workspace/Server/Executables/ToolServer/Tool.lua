@@ -16,7 +16,7 @@ end
 function Tool:_init() end
 
 function Tool:Activate()
-	print("Tool Activate")
+	print("[TOOL] Tool activated")
 end
 
 function Tool:Destroy() end

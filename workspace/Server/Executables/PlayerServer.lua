@@ -1,3 +1,18 @@
+--[[
+
+	PlayerServer.PlayerAdded -> metaplayer
+
+	metaplayer:SetPrimary(value)
+	-- sets the primary state of the player to [value]
+
+	metaplayer:SprintRequest(player)
+	-- requests the player to sprint
+
+	metaplayer:ImposePrimary(status, enemy, duration (seconds))
+	-- sets the primary state of [enemy] to [status] for [duration]
+
+]]
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -11,18 +26,52 @@ local stunParticles = particleHolder.StunParticles
 
 local sprintTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
 
+local antiSprint = {
+	"SLOW",
+	"STUN",
+	"STUNLOCK",
+	"GRAB",
+}
+
+local DEFAULT_SPEED = 0
+local DEFAULT_STAMINA = 1
+local DEFAULT_REGEN = 100
+local STAMINA_CUTOFF = 50
+local STAMINA_DEPLEAT = 1
+
 local PlayerServer = {}
+
+local function adjustSpeed(player, new)
+	local humanoid = player.Character:FindFirstChild("Humanoid")
+	if not humanoid then
+		return
+	end
+
+	humanoid.WalkSpeed = new
+end
+
+local function emitParticles(player, particles, amount)
+	local head = player.Character:FindFirstChild("Head")
+	particles = particles:Clone()
+	particles.Parent = head
+
+	for _, part in pairs(particles:GetChildren()) do
+		part:Emit(amount)
+	end
+end
 
 Players.PlayerAdded:Connect(function(player)
 	local playerTrace = {}
 	playerTrace.PrimaryState = "NONE"
 	playerTrace.SecondaryState = "NONE"
 	playerTrace.MovementState = "WALKING"
+
 	playerTrace.Stamina = 200
-	playerTrace._player = player
-	playerTrace._trove = Trove.new()
-	playerTrace._restam = false
 	playerTrace.StaminaRegen = 1
+
+	playerTrace._trove = Trove.new()
+	playerTrace._player = player
+	playerTrace._restam = false
 
 	local replFolder = playerTrace._trove:Add(Instance.new("Folder"))
 	replFolder.Parent = player
@@ -33,54 +82,26 @@ Players.PlayerAdded:Connect(function(player)
 	staminaReplicate.Value = playerTrace.Stamina
 	staminaReplicate.Parent = replFolder
 
-	function playerTrace:Changed()
-		if self.PrimaryState == "SLOW" then
-			local humanoid = player.Character:FindFirstChild("Humanoid")
-			if not humanoid then
-				return
-			end
+	function playerTrace:SetPrimary(value)
+		playerTrace.PrimaryState = value
+		playerTrace:_changed()
+	end
 
-			humanoid.WalkSpeed = 7
+	function playerTrace:_changed()
+		if self.PrimaryState == "SLOW" or self.PrimaryState == "STUNLOCK" then
+			adjustSpeed(player, 7)
 		elseif self.PrimaryState == "NONE" then
-			local humanoid = player.Character:FindFirstChild("Humanoid")
-			if not humanoid or self.MovementState == "RUNNING" then
-				return
-			end
-
-			humanoid.WalkSpeed = 16
+			adjustSpeed(player, 16)
 		elseif self.PrimaryState == "STUN" then
 			local humanoid = player.Character:FindFirstChild("Humanoid")
-			local head = player.Character:FindFirstChild("Head")
+			adjustSpeed(player, 5)
 
-			if not humanoid or not head then
-				return
-			end
-
-			local particles = stunParticles:Clone()
-			particles.Parent = head
-			humanoid.WalkSpeed = 5
 			humanoid:UnequipTools()
 			self.MovementState = "WALKING"
 
-			for _, part in pairs(particles:GetChildren()) do
-				part:Emit(3)
-			end
+			emitParticles(player, stunParticles, 3)
 		elseif self.PrimaryState == "NOMOVE" then
-			local humanoid = player.Character:FindFirstChild("Humanoid")
-			if not humanoid then
-				return
-			end
-
-			self.MovementState = "WALKING"
-			humanoid.WalkSpeed = 0
-		elseif self.PrimaryState == "STUNLOCK" then
-			local humanoid = player.Character:FindFirstChild("Humanoid")
-			if not humanoid then
-				return
-			end
-
-			self.MovementState = "WALKING"
-			humanoid.WalkSpeed = 7
+			adjustSpeed(player, 0)
 		end
 	end
 
@@ -90,7 +111,7 @@ Players.PlayerAdded:Connect(function(player)
 			return
 		end
 
-		if self.Stamina < 50 then
+		if self.Stamina < STAMINA_CUTOFF then
 			self:_restamina()
 			return
 		end
@@ -100,7 +121,7 @@ Players.PlayerAdded:Connect(function(player)
 		TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = 25 }):Play()
 
 		repeat
-			self.Stamina -= 1
+			self.Stamina -= STAMINA_DEPLEAT
 			staminaReplicate.Value = self.Stamina
 			task.wait(0.05)
 		until self.Stamina <= 0 or self.MovementState == "WALKING" or humanoid.MoveDirection.Magnitude == 0
@@ -126,7 +147,11 @@ Players.PlayerAdded:Connect(function(player)
 			self.Stamina += self.StaminaRegen
 			staminaReplicate.Value = self.Stamina
 			task.wait(0.05)
-		until self.Stamina == 200 or self.MovementState == "RUNNING"
+		until self.Stamina >= 200 or self.MovementState == "RUNNING"
+
+		-- prevent odd StaminaRegen values from creating inf regen
+		self.Stamina = math.clamp(self.Stamina, 0, 200)
+
 		playerTrace._restam = false
 
 		if self.MovementState ~= "RUNNING" then
@@ -135,21 +160,13 @@ Players.PlayerAdded:Connect(function(player)
 		end
 	end
 
-	function playerTrace:Sprint()
-		if self.PrimaryState == "SLOW" then
-			return
-		end
-		if self.PrimaryState == "STUN" then
-			return
-		end
-		if self.PrimaryState == "GRAB" then
-			return
-		end
-		if self.PrimaryState == "STUNLOCK" then
+	function playerTrace:SprintRequest()
+		if table.find(antiSprint, self.PrimaryState) then
 			return
 		end
 
 		local humanoid = player.Character:FindFirstChild("Humanoid")
+
 		if not humanoid or self.MovementState == "WALKING" then
 			return
 		end
@@ -163,8 +180,7 @@ Players.PlayerAdded:Connect(function(player)
 		if not PlayerServer[enemy] then
 			return
 		end
-		PlayerServer[enemy].PrimaryState = status
-		PlayerServer[enemy]:Changed()
+		PlayerServer[enemy]:SetPrimary(status)
 
 		if not duration then
 			return
@@ -172,8 +188,7 @@ Players.PlayerAdded:Connect(function(player)
 
 		task.delay(duration, function()
 			if PlayerServer[enemy] then
-				PlayerServer[enemy].PrimaryState = "NONE"
-				PlayerServer[enemy]:Changed()
+				PlayerServer[enemy]:SetPrimary("NONE")
 			end
 		end)
 	end
@@ -184,9 +199,9 @@ Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(character)
 		local humanoid = character:WaitForChild("Humanoid")
 
-		humanoid:SetAttribute("Speed", 0)
-		humanoid:SetAttribute("Regeneration", 100)
-		humanoid:SetAttribute("Stamina", 1)
+		humanoid:SetAttribute("Speed", DEFAULT_SPEED)
+		humanoid:SetAttribute("Regeneration", DEFAULT_REGEN)
+		humanoid:SetAttribute("Stamina", DEFAULT_STAMINA)
 
 		humanoid:GetAttributeChangedSignal("Speed"):Connect(function()
 			if humanoid:GetAttribute("Speed") == 0 and changeCache then
@@ -198,8 +213,8 @@ Players.PlayerAdded:Connect(function(player)
 		end)
 
 		humanoid:GetAttributeChangedSignal("Stamina"):Connect(function()
-			if humanoid:GetAttribute("Stamina") == 0 and changeCache then
-				playerTrace.StaminaRegen -= changeCache
+			if humanoid:GetAttribute("Stamina") == 0 and changeCacheStam then
+				playerTrace.StaminaRegen -= changeCacheStam
 			else
 				changeCacheStam = (playerTrace.StaminaRegen * humanoid:GetAttribute("Stamina"))
 				playerTrace.StaminaRegen += changeCacheStam
@@ -224,7 +239,7 @@ function PlayerServer:Run()
 
 		if on then
 			metaplayer.MovementState = "RUNNING"
-			metaplayer:Sprint()
+			metaplayer:SprintRequest()
 		else
 			metaplayer.MovementState = "WALKING"
 		end

@@ -1,3 +1,7 @@
+--[[
+	-- inherited from melee
+]]
+
 local ServerStorage = game:GetService("ServerStorage")
 --local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -23,8 +27,7 @@ local activate = {
 		local range = self._config:GetAttribute("Range")
 		local lifeTime = self._config:GetAttribute("LifeTime")
 
-		self._metaplayer.PrimaryState = "NOMOVE"
-		self._metaplayer:Changed()
+		self._metaplayer:SetPrimary("NOMOVE")
 
 		if not humanoidRP or not mousePosition then
 			return
@@ -73,8 +76,7 @@ local activate = {
 		meteorClone.Anchored = false
 
 		task.delay(lifeTime / 2, function()
-			self._metaplayer.PrimaryState = "NONE"
-			self._metaplayer:Changed()
+			self._metaplayer:SetPrimary("NONE")
 
 			task.wait(lifeTime / 2)
 
