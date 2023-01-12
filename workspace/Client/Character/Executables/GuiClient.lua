@@ -13,7 +13,6 @@ local statsFrame = hotbarGui.StatsFrame
 local hotbarFrame = statsFrame.HotbarFrame
 
 local notificationChannel = ReplicatedStorage["Events"].Notification
-
 local notifications = playerGui.Notifications
 local notificationMain = notifications.NotificationMain
 local notificationOpp = notifications.NotificationOpp
