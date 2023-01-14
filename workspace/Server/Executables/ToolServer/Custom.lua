@@ -17,6 +17,8 @@ local meteor = combatAssets.Meteor
 local warning = combatAssets.Warning
 local warningSizeTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 
+local BASEY = workspace:WaitForChild("baseplate").BASEY.Position.Y
+
 --local animRelay = ReplicatedStorage["Events"].AnimRelay
 
 local activate = {
@@ -64,7 +66,7 @@ local activate = {
 
 		local warningClone = self._trove:Add(warning:Clone())
 		warningClone.Parent = workspace
-		warningClone.CFrame = meteorClone.CFrame - Vector3.new(0, 50, 0)
+		warningClone.Position = Vector3.new(meteorClone.Position.X, BASEY, meteorClone.Position.Z)
 		warningClone.Orientation = Vector3.new(0, 0, 90)
 
 		local warningCloneSize = warningClone.Size

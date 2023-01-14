@@ -5,6 +5,53 @@ local Players = game:GetService("Players")
 local notificationChannel = ReplicatedStorage["Events"].Notification
 local particleHolder = ServerStorage["Assets"].Particles.ParticleHolder
 
+local effectDescriptions = {
+	["Stamina"] = {
+		["Name"] = "stamina regen",
+		["Effect"] = -0.3,
+		["Duration"] = 0,
+		["Image"] = "rbxassetid://11684108736",
+	},
+	["Regeneration"] = {
+		["Name"] = "regeneration",
+		["Effect"] = -0.5,
+		["Duration"] = 0,
+		["Image"] = "rbxassetid://11684788740",
+	},
+	["Speed"] = {
+		["Name"] = "speed",
+		["Effect"] = -0.3,
+		["Duration"] = 0,
+		["Image"] = "rbxassetid://11684108736",
+	},
+	["DamageIntake"] = {
+		["Name"] = "damage intake",
+		["Effect"] = 0.1,
+		["Duration"] = 0,
+		["Image"] = "http://www.roblox.com/asset/?id=11884485716",
+	},
+	["DamageOutput"] = {
+		["Name"] = "damage output",
+		["Effect"] = -0.2,
+		["Duration"] = 0,
+		["Image"] = "http://www.roblox.com/asset/?id=11884552728",
+	},
+}
+
+local function fetchEffect(name, duration, val)
+	local effect = effectDescriptions[name]
+
+	if not effect then
+		return
+	end
+
+	effect = table.clone(effect)
+	effect["Duration"] = duration
+	effect["Effect"] = val
+
+	return effect
+end
+
 local subEffects = {
 	["normalEffect"] = function(humanoid, duration, name, power)
 		local attribute = humanoid:GetAttribute(name)
@@ -55,12 +102,22 @@ local statusEffects = {
 		local player = Players:GetPlayerFromCharacter(humanoid.Parent)
 
 		if player then
-			notificationChannel:FireClient(player, {
-				"cursed!",
-				"you've been cursed, you feel weaker and more vulnerable",
-				"rbxassetid://10590477428",
-				4,
-			}, true)
+			notificationChannel:FireClient(
+				player,
+				{
+					"cursed!",
+					"you've been cursed, you feel weaker and more vulnerable",
+					"rbxassetid://10590477428",
+					4,
+				},
+				true,
+				{
+					fetchEffect("DamageIntake", duration, 0.1),
+					fetchEffect("DamageOutput", duration, -0.2),
+					fetchEffect("Regeneration", duration, -0.5),
+					fetchEffect("Speed", duration, -0.1),
+				}
+			)
 		end
 	end,
 	["BrokenBone"] = function(humanoid, duration)
@@ -71,12 +128,21 @@ local statusEffects = {
 		local player = Players:GetPlayerFromCharacter(humanoid.Parent)
 
 		if player then
-			notificationChannel:FireClient(player, {
-				"ouch!",
-				"you've broken a bone, you feel slower and more vulnerable",
-				"rbxassetid://10590477428",
-				4,
-			}, true)
+			notificationChannel:FireClient(
+				player,
+				{
+					"ouch!",
+					"you've broken a bone, you feel slower and more vulnerable",
+					"rbxassetid://10590477428",
+					4,
+				},
+				true,
+				{
+					fetchEffect("Stamina", duration, -0.3),
+					fetchEffect("Regeneration", duration, -0.5),
+					fetchEffect("Speed", duration, -0.3),
+				}
+			)
 		end
 	end,
 }

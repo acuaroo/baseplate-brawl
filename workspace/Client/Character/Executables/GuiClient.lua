@@ -13,9 +13,14 @@ local statsFrame = hotbarGui.StatsFrame
 local hotbarFrame = statsFrame.HotbarFrame
 
 local notificationChannel = ReplicatedStorage["Events"].Notification
-local notifications = playerGui.Notifications
-local notificationMain = notifications.NotificationMain
-local notificationOpp = notifications.NotificationOpp
+local notificationMain = statsFrame.NotificationMain
+local notificationOpp = statsFrame.NotificationOpp
+
+local notificationMainReset = UDim2.new(3, 0, 1.067, 0)
+local notificationOppReset = UDim2.new(-3, 0, 1.067, 0)
+
+local notificationMainOut = UDim2.new(1.407, 0, 1.067, 0)
+local notificationOppOut = UDim2.new(-1.075, 0, 1.067, 0)
 
 local totalHealth = statsFrame.Health.TotalHealth
 local currentHealth = totalHealth.CurrentHealth
@@ -46,60 +51,89 @@ local validKeyCodes = {
 	[Enum.KeyCode.Six] = { 6, Enum.KeyCode.Six },
 }
 
-local statusLookup = {
-	["DamageIntake"] = {
-		["Image"] = "rbxassetid://9197335628",
-	},
-	["DamageOutput"] = {
-		["Image"] = "rbxassetid://131882405",
-	},
-	["Regeneration"] = {
-		["Image"] = "rbxassetid://1082043059",
-	},
-	["Stamina"] = {
-		["Image"] = "rbxassetid://1265939968",
-	},
-	["Speed"] = {
-		["Image"] = "rbxassetid://5897389631",
-	},
-}
-
-local activeStatuses = {}
 local activeTool = nil
+local activeStatuses = {}
 
 local GuiClient = {}
 
-local function addStatus(statusName)
-	if not statusLookup[statusName] then
-		return
-	end
-	if #activeStatuses >= 5 then
-		return
-	end
-	if activeStatuses[statusName] then
-		return
-	end
-
-	local newTemplate: ImageButton = statusTemplate:Clone()
-	newTemplate.Parent = statusFrame
-	newTemplate.Image = statusLookup[statusName]["Image"]
-	newTemplate.Visible = true
-
-	activeStatuses[statusName] = newTemplate
+local function tweenNotification(frame, method)
+	frame:TweenPosition(method, Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.5)
 end
 
-local function removeStatus(statusName)
-	if not statusLookup[statusName] then
+local function delayStatus(status)
+	task.delay(status["Duration"], function()
+		-- if activeStatuses[status["Name"]]:GetAttribute("Duration") > 0 then
+		-- 	return
+		-- end
+
+		activeStatuses[status["Name"]]:Destroy()
+		activeStatuses[status["Name"]] = nil
+	end)
+end
+
+local function statusLoop(statusArgs)
+	for _, status in statusArgs do
+		if activeStatuses[status["Name"]] then
+			local stat = activeStatuses[status["Name"]]
+
+			stat:SetAttribute("Duration", stat:GetAttribute("Duration") + status["Duration"])
+			stat:SetAttribute("Effect", stat:GetAttribute("Effect") + status["Effect"])
+			delayStatus(stat)
+
+			continue
+		end
+
+		local stat = statusTemplate:Clone()
+		stat.Parent = statusFrame
+
+		stat.Image = status["Image"]
+
+		stat:SetAttribute("Duration", status["Duration"])
+		stat:SetAttribute("Name", status["Name"])
+		stat:SetAttribute("Effect", status["Effect"])
+		stat.Arrow.Visible = true
+
+		if status["Effect"] < 0 then
+			stat.Arrow.Rotation = 180
+			stat.Arrow.ImageColor3 = Color3.fromRGB(255, 129, 131)
+		else
+			stat.Arrow.Rotation = 0
+			stat.Arrow.ImageColor3 = Color3.fromRGB(178, 255, 174)
+		end
+
+		local hover = stat.Hover
+		hover.Title.Text = status["Name"]
+		hover.Description.Text = tostring(status["Effect"] * 100) .. "x, " .. tostring(status["Duration"]) .. "sec"
+
+		stat.MouseEnter:Connect(function()
+			hover.Visible = true
+		end)
+
+		stat.MouseLeave:Connect(function()
+			hover.Visible = false
+		end)
+
+		activeStatuses[status["Name"]] = stat
+
+		delayStatus(status)
+	end
+end
+
+local function notification(frame, resetPosition, outPosition, args)
+	frame.Title.Text = args[1]
+	frame.Description.Text = args[2]
+	frame.Icon.Image = args[3]
+
+	frame.Parent.Position = resetPosition
+	tweenNotification(frame.Parent, outPosition)
+
+	if args[4] == true then
 		return
 	end
 
-	if not activeStatuses[statusName] then
-		return
-	end
-
-	local newTemplate = activeStatuses[statusName]
-	newTemplate:Destroy()
-	activeStatuses[statusName] = nil
+	task.delay(args[4], function()
+		tweenNotification(frame.Parent, resetPosition)
+	end)
 end
 
 function GuiClient:Run()
@@ -224,96 +258,26 @@ function GuiClient:Run()
 		currentHealth:TweenSize(UDim2.new(newPos, 0, 1, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.1)
 	end)
 
-	humanoid.AttributeChanged:Connect(function(attribute)
-		local val = humanoid:GetAttribute(attribute)
-
-		if attribute == "Regeneration" and val == 100 then
-			removeStatus(attribute)
-			return
-		end
-
-		if attribute == "Speed" and val == 0 then
-			removeStatus(attribute)
-			return
-		end
-
-		if attribute == "Stamina" and val == 1 then
-			removeStatus(attribute)
-			return
-		end
-
-		if val then
-			addStatus(attribute)
-		else
-			removeStatus(attribute)
-		end
-	end)
-
 	soulCount.Text = souls.Value
 	souls.Changed:Connect(function()
 		soulCount.Text = souls.Value
 	end)
 
-	notificationChannel.OnClientEvent:Connect(function(args, opp)
+	notificationChannel.OnClientEvent:Connect(function(args, opp, statusArgs)
+		-- args[4] is cancel value
 		if args[4] == false then
-			local frame = notificationMain.Notification
-
-			frame:TweenPosition(UDim2.new(3, 0, 0.05, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.5, true)
+			tweenNotification(notificationMain, notificationMainReset)
 			return
 		end
 
+		if statusArgs then
+			statusLoop(statusArgs)
+		end
+
 		if not opp then
-			local frame = notificationMain.Notification
-			frame.Title.Text = args[1]
-			frame.Description.Text = args[2]
-			frame.Icon.Image = args[3]
-
-			frame.Position = UDim2.new(3, 0, 0.05, 0)
-			frame:TweenPosition(
-				UDim2.new(0.18, 0, 0.05, 0),
-				Enum.EasingDirection.In,
-				Enum.EasingStyle.Linear,
-				0.5,
-				true
-			)
-
-			if args[4] == true then
-				return
-			end
-
-			task.delay(args[4], function()
-				frame:TweenPosition(
-					UDim2.new(3, 0, 0.05, 0),
-					Enum.EasingDirection.In,
-					Enum.EasingStyle.Linear,
-					0.5,
-					true
-				)
-			end)
+			notification(notificationMain.Notification, notificationMainReset, notificationMainOut, args)
 		else
-			local frame = notificationOpp.Notification
-			frame.Title.Text = args[1]
-			frame.Description.Text = args[2]
-			frame.Icon.Image = args[3]
-
-			frame.Position = UDim2.new(-3, 0, 0.05, 0)
-			frame:TweenPosition(
-				UDim2.new(0.03, 0, 0.05, 0),
-				Enum.EasingDirection.In,
-				Enum.EasingStyle.Linear,
-				0.5,
-				true
-			)
-
-			task.delay(args[4], function()
-				frame:TweenPosition(
-					UDim2.new(-3, 0, 0.05, 0),
-					Enum.EasingDirection.In,
-					Enum.EasingStyle.Linear,
-					0.5,
-					true
-				)
-			end)
+			notification(notificationOpp.Notification, notificationOppReset, notificationOppOut, args)
 		end
 	end)
 end

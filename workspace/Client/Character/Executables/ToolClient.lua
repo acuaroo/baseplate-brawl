@@ -22,6 +22,23 @@ local spearCon
 
 local ToolClient = {}
 
+local function cleanupConnections()
+	if activatedCon then
+		activatedCon:Disconnect()
+		activatedCon = nil
+	end
+
+	if offhandCon then
+		offhandCon:Disconnect()
+		offhandCon = nil
+	end
+
+	if offhandDiscon then
+		offhandDiscon:Disconnect()
+		offhandDiscon = nil
+	end
+end
+
 function ToolClient:Run()
 	local functionality = {
 		["throwSpear"] = function(char, _)
@@ -145,20 +162,7 @@ function ToolClient:Run()
 				functionality[subClass](character, tool)
 			end
 
-			if activatedCon then
-				activatedCon:Disconnect()
-				activatedCon = nil
-			end
-
-			if offhandCon then
-				offhandCon:Disconnect()
-				offhandCon = nil
-			end
-
-			if offhandDiscon then
-				offhandDiscon:Disconnect()
-				offhandDiscon = nil
-			end
+			cleanupConnections()
 		end)
 	end
 
