@@ -15,6 +15,7 @@ local hotbarFrame = statsFrame.HotbarFrame
 local notificationChannel = ReplicatedStorage["Events"].Notification
 local notificationMain = statsFrame.NotificationMain
 local notificationOpp = statsFrame.NotificationOpp
+local toolEquip = ReplicatedStorage["Events"].ToolEquip
 
 local notificationMainReset = UDim2.new(3, 0, 1.067, 0)
 local notificationOppReset = UDim2.new(-3, 0, 1.067, 0)
@@ -53,6 +54,7 @@ local validKeyCodes = {
 
 local activeTool = nil
 local activeStatuses = {}
+local hotConnections = {}
 
 local GuiClient = {}
 
@@ -80,6 +82,77 @@ local function delayStatus(status)
 		stat:Destroy()
 		stat = nil
 	end)
+end
+
+local function toolCheck(currentTool)
+	if activeTool == currentTool then
+		local valid = toolEquip:InvokeServer(currentTool, false)
+
+		if valid then
+			activeTool = nil
+		end
+	else
+		local valid = toolEquip:InvokeServer(currentTool, true)
+
+		if valid then
+			activeTool = currentTool
+		end
+	end
+end
+
+local function sortBackpack()
+	for index, tool in pairs(tools) do
+		local hotbarSlot = hotbarFrame["Slot" .. index]
+		if not hotbarSlot then
+			continue
+		end
+
+		local viewport = hotbarSlot.ImageViewport
+		viewport.Visible = true
+		viewport:ClearAllChildren()
+
+		local toolVisual = tool:FindFirstChild("Build")
+		if not toolVisual then
+			continue
+		end
+
+		toolVisual = toolVisual:Clone()
+
+		if not toolVisual.PrimaryPart then
+			continue
+		end
+		toolVisual:SetPrimaryPartCFrame(visualOffset)
+
+		local toolSettings = toolVisual:FindFirstChild("Settings")
+
+		if toolSettings:GetAttribute("VisualCFrame") then
+			local customVisualCFrame = toolSettings:GetAttribute("VisualCFrame")
+			toolVisual:SetPrimaryPartCFrame(customVisualCFrame)
+		end
+
+		toolVisual.Parent = viewport
+
+		local viewportCamera = Instance.new("Camera")
+		viewportCamera.Parent = viewport
+		viewport.CurrentCamera = viewportCamera
+
+		if toolSettings:GetAttribute("CameraCFrame") then
+			local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
+			viewportCamera.CFrame = customCameraCFrame
+		else
+			viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * toolSizeRatio)))
+				* rotationalOffset
+		end
+
+		viewportCamera.DiagonalFieldOfView = 0.7
+		viewportCamera.FieldOfView = toolSettings:GetAttribute("FOV")
+
+		hotConnections[index] = hotbarSlot.MouseButton1Down:Connect(function()
+			local currentTool = tools[index]
+
+			toolCheck(currentTool)
+		end)
+	end
 end
 
 local function statusLoop(statusArgs)
@@ -149,59 +222,28 @@ local function notification(frame, resetPosition, outPosition, args)
 	end)
 end
 
+local function loopRemoved(obj)
+	local count = 0
+
+	for _, tool in pairs(tools) do
+		count += 1
+		if tool == obj then
+			table.remove(tools, count)
+
+			if hotConnections[count] then
+				hotConnections[count]:Disconnect()
+				hotConnections[count] = nil
+			end
+
+			sortBackpack()
+			break
+		end
+	end
+end
+
 function GuiClient:Run()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
-
-	local function sortBackpack()
-		for index, tool in pairs(tools) do
-			local hotbarSlot = hotbarFrame["Slot" .. index]
-			if not hotbarSlot then
-				continue
-			end
-
-			local viewport = hotbarSlot.ImageViewport
-			viewport.Visible = true
-			viewport:ClearAllChildren()
-
-			local toolVisual = tool:FindFirstChild("Build")
-			if not toolVisual then
-				continue
-			end
-
-			toolVisual = toolVisual:Clone()
-
-			if not toolVisual.PrimaryPart then
-				continue
-			end
-			toolVisual:SetPrimaryPartCFrame(visualOffset)
-
-			local toolSettings = toolVisual:FindFirstChild("Settings")
-
-			if toolSettings:GetAttribute("VisualCFrame") then
-				local customVisualCFrame = toolSettings:GetAttribute("VisualCFrame")
-				toolVisual:SetPrimaryPartCFrame(customVisualCFrame)
-			end
-
-			toolVisual.Parent = viewport
-
-			local viewportCamera = Instance.new("Camera")
-			viewportCamera.Parent = viewport
-			viewport.CurrentCamera = viewportCamera
-
-			if toolSettings:GetAttribute("CameraCFrame") then
-				local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
-				viewportCamera.CFrame = customCameraCFrame
-			else
-				viewportCamera.CFrame = CFrame.new(
-					Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * toolSizeRatio))
-				) * rotationalOffset
-			end
-
-			viewportCamera.DiagonalFieldOfView = 0.7
-			viewportCamera.FieldOfView = toolSettings:GetAttribute("FOV")
-		end
-	end
 
 	backpack.ChildAdded:Connect(function(obj)
 		if obj:IsA("Tool") and not table.find(tools, obj) then
@@ -219,16 +261,7 @@ function GuiClient:Run()
 
 	character.ChildRemoved:Connect(function(obj)
 		if obj:IsA("Tool") and not table.find(tools, obj) then
-			local count = 0
-
-			for _, tool in pairs(tools) do
-				count += 1
-				if tool == obj then
-					table.remove(tools, count)
-					sortBackpack()
-					break
-				end
-			end
+			loopRemoved(obj)
 		end
 	end)
 
@@ -242,14 +275,7 @@ function GuiClient:Run()
 		if validKeyCodes[input.KeyCode] then
 			local currentTool = tools[validKeyCodes[input.KeyCode][1]]
 
-			if activeTool == currentTool then
-				activeTool = nil
-				humanoid:UnequipTools()
-			else
-				activeTool = currentTool
-				humanoid:UnequipTools()
-				humanoid:EquipTool(currentTool)
-			end
+			toolCheck(currentTool)
 		end
 	end)
 

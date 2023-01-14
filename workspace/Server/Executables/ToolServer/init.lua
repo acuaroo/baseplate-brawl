@@ -14,10 +14,19 @@ local animRelay = ReplicatedStorage["Events"].AnimRelay
 local toolActivated = ReplicatedStorage["Events"].ToolActivated
 local toolOffhand = ReplicatedStorage["Events"].ToolOffhand
 local toolAbility = ReplicatedStorage["Events"].ToolAbility
+local toolEquip = ReplicatedStorage["Events"].ToolEquip
 local notificationChannel = ReplicatedStorage["Events"].Notification
 
 local toolPrepTable = {}
 local ToolServer = {}
+
+local function toolParse(metaplayer, blacklist)
+	if blacklist[metaplayer.PrimaryState] then
+		return true
+	else
+		return false
+	end
+end
 
 function ToolServer:Run()
 	local function toolCheck(player, toolobj)
@@ -43,13 +52,6 @@ function ToolServer:Run()
 
 		local tool = route.new(player, toolobj, config, MetaPlayers[player])
 		toolPrepTable[player][toolobj.Name] = tool
-
-		notificationChannel:FireClient(player, {
-			toolobj:GetAttribute("Title"),
-			toolobj:GetAttribute("Description"),
-			toolobj:GetAttribute("Image"),
-			true,
-		}, false)
 	end)
 
 	animRelay.OnServerEvent:Connect(function(player, toolobj)
@@ -60,13 +62,6 @@ function ToolServer:Run()
 
 		MetaPlayers[player]:SetPrimary("NONE")
 		tool:Cleanup()
-
-		notificationChannel:FireClient(player, {
-			toolobj:GetAttribute("Title"),
-			toolobj:GetAttribute("Description"),
-			toolobj:GetAttribute("Image"),
-			false,
-		}, false)
 	end)
 
 	toolAbility.OnServerInvoke = function(player, toolobj, _, playerData)
@@ -75,15 +70,15 @@ function ToolServer:Run()
 		if not tool then
 			return false
 		end
+
 		if tool.AbilityDebouncing then
 			return false
 		end
-		if MetaPlayers[player].PrimaryState == "STUN" then
+
+		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL" }) then
 			return false
 		end
-		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
-			return false
-		end
+
 		if not tool._config:GetAttribute("Ability") then
 			return false
 		end
@@ -102,13 +97,7 @@ function ToolServer:Run()
 		if tool.Debouncing then
 			return false
 		end
-		if MetaPlayers[player].PrimaryState == "STUN" then
-			return false
-		end
-		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
-			return false
-		end
-		if MetaPlayers[player].PrimaryState == "FUNCTIONAL" then
+		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL" }) then
 			return false
 		end
 
@@ -126,19 +115,63 @@ function ToolServer:Run()
 		if tool.OffDebouncing then
 			return false
 		end
-		if MetaPlayers[player].PrimaryState == "STUN" then
-			return false
-		end
-		if MetaPlayers[player].MovementState == "RUNNING" then
-			return false
-		end
-		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
+		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "RUNNING", "FUNCTIONAL", "GRAB" }) then
 			return false
 		end
 
 		tool:Offhand(enable)
 
 		return true
+	end
+
+	toolEquip.OnServerInvoke = function(player, toolobj, equip)
+		if equip then
+			if toolobj.Parent ~= player.Backpack then
+				return -- TODO: punish :)
+			end
+
+			if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "ATTACKING" }) then
+				return false
+			end
+
+			local humanoid = player.Character:FindFirstChild("Humanoid")
+
+			if not humanoid then
+				return
+			end
+
+			humanoid:EquipTool(toolobj)
+
+			notificationChannel:FireClient(player, {
+				toolobj:GetAttribute("Title"),
+				toolobj:GetAttribute("Description"),
+				toolobj:GetAttribute("Image"),
+				true,
+			}, false)
+
+			return true
+		else
+			if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "ATTACKING" }) then
+				return false
+			end
+
+			local humanoid = player.Character:FindFirstChild("Humanoid")
+
+			if not humanoid then
+				return
+			end
+
+			humanoid:UnequipTools()
+
+			notificationChannel:FireClient(player, {
+				toolobj:GetAttribute("Title"),
+				toolobj:GetAttribute("Description"),
+				toolobj:GetAttribute("Image"),
+				false,
+			}, false)
+
+			return true
+		end
 	end
 
 	Players.PlayerAdded:Connect(function(player)

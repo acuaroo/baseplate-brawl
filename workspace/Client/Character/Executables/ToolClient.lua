@@ -112,7 +112,6 @@ function ToolClient:Run()
 
 				if animationPause then
 					task.wait(animationPause)
-					print("cont")
 				end
 
 				animation = animator:LoadAnimation(animation)
