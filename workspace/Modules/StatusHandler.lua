@@ -138,7 +138,7 @@ local statusEffects = {
 				},
 				true,
 				{
-					fetchEffect("Stamina", duration, -0.3),
+					fetchEffect("Stamina", duration, -0.5),
 					fetchEffect("Regeneration", duration, -0.5),
 					fetchEffect("Speed", duration, -0.3),
 				}

@@ -135,6 +135,8 @@ local functionality = {
 				if not cleaned then
 					cleanup(rayConnection, lenConnection)
 				end
+
+				self._metaplayer:SetPrimary("NONE")
 			end)
 		else
 			local config = self._config
@@ -189,10 +191,15 @@ function Func:OffDebounce(address)
 end
 
 function Func:Offhand(enable)
+	if self._metaplayer.PrimaryState == "ATTACKING" then
+		return
+	end
+
 	local subClass = self.SubClass
 
 	if functionality[subClass] and not self.OffDebouncing then
 		functionality[subClass](enable, self)
+		self._metaplayer:SetPrimary("FUNCTIONAL")
 	end
 end
 

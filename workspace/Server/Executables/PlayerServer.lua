@@ -38,6 +38,7 @@ local DEFAULT_STAMINA = 1
 local DEFAULT_REGEN = 100
 local STAMINA_CUTOFF = 50
 local STAMINA_DEPLEAT = 1
+local STAMINA_REGEN = 1
 
 local PlayerServer = {}
 
@@ -67,7 +68,7 @@ Players.PlayerAdded:Connect(function(player)
 	playerTrace.MovementState = "WALKING"
 
 	playerTrace.Stamina = 200
-	playerTrace.StaminaRegen = 1
+	playerTrace.StaminaRegen = 0.05
 
 	playerTrace._trove = Trove.new()
 	playerTrace._player = player
@@ -144,9 +145,9 @@ Players.PlayerAdded:Connect(function(player)
 		playerTrace._restam = true
 
 		repeat
-			self.Stamina += self.StaminaRegen
+			self.Stamina += STAMINA_REGEN
 			staminaReplicate.Value = self.Stamina
-			task.wait(0.05)
+			task.wait(self.StaminaRegen)
 		until self.Stamina >= 200 or self.MovementState == "RUNNING"
 
 		-- prevent odd StaminaRegen values from creating inf regen

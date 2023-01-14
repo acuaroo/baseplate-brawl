@@ -108,6 +108,9 @@ function ToolServer:Run()
 		if MetaPlayers[player].PrimaryState == "STUNLOCK" then
 			return false
 		end
+		if MetaPlayers[player].PrimaryState == "FUNCTIONAL" then
+			return false
+		end
 
 		tool:Activate(args)
 

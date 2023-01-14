@@ -62,12 +62,23 @@ end
 
 local function delayStatus(status)
 	task.delay(status["Duration"], function()
-		-- if activeStatuses[status["Name"]]:GetAttribute("Duration") > 0 then
-		-- 	return
-		-- end
+		local stat = activeStatuses[status["Name"]]
+		if not stat then
+			return
+		end
 
-		activeStatuses[status["Name"]]:Destroy()
-		activeStatuses[status["Name"]] = nil
+		if stat:GetAttribute("Override") then
+			local hover = stat.Hover
+			local overrideVal = stat:GetAttribute("OverrideValue")
+			hover.Description.Text = tostring(overrideVal * 100) .. "x, " .. tostring(status["Duration"]) .. "sec"
+
+			stat:SetAttribute("OverrideValue", nil)
+			stat:SetAttribute("Override", nil)
+			return
+		end
+
+		stat:Destroy()
+		stat = nil
 	end)
 end
 
@@ -78,8 +89,10 @@ local function statusLoop(statusArgs)
 
 			stat:SetAttribute("Duration", stat:GetAttribute("Duration") + status["Duration"])
 			stat:SetAttribute("Effect", stat:GetAttribute("Effect") + status["Effect"])
-			delayStatus(stat)
+			stat:SetAttribute("Override", true)
+			stat:SetAttribute("OverrideValue", status["Effect"])
 
+			delayStatus(status)
 			continue
 		end
 
