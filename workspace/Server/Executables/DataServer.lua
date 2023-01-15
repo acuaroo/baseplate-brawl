@@ -163,7 +163,7 @@ function DataServer:RemoveTool(player, tool)
 	if Profiles[player] then
 		local profileTool = Profiles[player].Data.tools[tool]
 		if not profileTool then
-			warn("[DATA] " .. player.Name .. " tried to remove a nil tool :", tool)
+			warn("[DATA]: " .. player.Name .. " tried to remove a nil tool :", tool)
 			return
 		end
 
@@ -178,7 +178,7 @@ function DataServer:EquipSetTool(player, tool, equipped)
 		local profileTool = Profiles[player].Data.tools[tool]
 
 		if not profileTool then
-			warn("[DATA] " .. player.Name .. " tried to remove a nil tool :", tool)
+			warn("[DATA]: " .. player.Name .. " tried to remove a nil tool :", tool)
 			return
 		end
 

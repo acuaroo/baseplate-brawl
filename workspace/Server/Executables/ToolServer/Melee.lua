@@ -39,6 +39,7 @@ local shieldAsset = combatAssets.Shield
 
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local animations = ReplicatedStorage["Animations"]
+local requestVisual = ReplicatedStorage["Events"].RequestVisual
 
 local meleehooks = {}
 
@@ -186,10 +187,19 @@ function Melee:Activate()
 
 	self._metaplayer:SetPrimary("ATTACKING")
 
+	local randomPitch = math.random(95, 105) / 100
+
+	self._tool.Swing.Shift.Octave = randomPitch
+	self._tool.Swing:Play()
+
 	self._castConnection = self.Caster.HumanoidCollided:Connect(function(ray, humanoid)
 		if self.quickDebounce[humanoid] or not self._meleeValid then
 			return
 		end
+
+		self._tool.Hit.Shift.Octave = randomPitch
+		self._tool.Hit:Play()
+
 		self.quickDebounce[humanoid] = true
 
 		local shield = humanoid.Parent:FindFirstChild("Shield")
@@ -216,6 +226,16 @@ function Melee:Activate()
 			local animLoaded = humanoid:LoadAnimation(animations[address])
 			animLoaded:Play()
 		end
+
+		requestVisual:FireClient(self.Owner, "ScreenShake", {
+			["Toggle"] = nil,
+			["Magnitude"] = 1,
+			["Roughness"] = 2,
+			["FadeIn"] = 0.1,
+			["FadeOut"] = 0.1,
+			["PosInfluence"] = Vector3.new(0.15, 0.15, 0.15),
+			["RotInfluence"] = Vector3.new(1, 1, 1),
+		})
 
 		DamageHandler:Damage(self.Owner, humanoid, self._tool, self._config, true, ray.Instance)
 
@@ -280,10 +300,28 @@ function Melee:Shield(animationHeader, shield)
 			end
 		end
 
+		local box = shield.Box
+		box.Parent = workspace
+		box.Anchored = true
+
+		for _, particle in box.ShieldBreak:GetChildren() do
+			particle:Emit(3)
+		end
+
 		shield:Destroy()
 
 		animRelay:FireClient(self.Owner, animHeaderOwner .. flippedDirection .. "Swing", true)
 		animRelay:FireClient(self.Owner, "Stun")
+
+		requestVisual:FireClient(self.Owner, "ScreenShake", {
+			["Toggle"] = nil,
+			["Magnitude"] = 3,
+			["Roughness"] = 2,
+			["FadeIn"] = 0.25,
+			["FadeOut"] = 0.5,
+			["PosInfluence"] = Vector3.new(0.15, 0.15, 0.15),
+			["RotInfluence"] = Vector3.new(1, 1.5, 1),
+		})
 
 		local attachment = self._trove:Add(Instance.new("Attachment"))
 		attachment.Parent = humanoidRP
@@ -303,6 +341,7 @@ function Melee:Shield(animationHeader, shield)
 			self._meleeValid = true
 			animRelay:FireClient(self.Owner, "Stun", true)
 			self._metaplayer:SetPrimary("NONE")
+			box:Destroy()
 		end)
 	end
 end

@@ -75,7 +75,7 @@ function ToolServer:Run()
 			return false
 		end
 
-		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL" }) then
+		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "NOMOVE" }) then
 			return false
 		end
 
@@ -97,7 +97,7 @@ function ToolServer:Run()
 		if tool.Debouncing then
 			return false
 		end
-		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL" }) then
+		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "NOMOVE" }) then
 			return false
 		end
 
@@ -115,7 +115,7 @@ function ToolServer:Run()
 		if tool.OffDebouncing then
 			return false
 		end
-		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "RUNNING", "FUNCTIONAL", "GRAB" }) then
+		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "RUNNING", "FUNCTIONAL", "GRAB", "NOMOVE" }) then
 			return false
 		end
 
@@ -130,7 +130,7 @@ function ToolServer:Run()
 				return -- TODO: punish :)
 			end
 
-			if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "ATTACKING" }) then
+			if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "ATTACKING", "NOMOVE" }) then
 				return false
 			end
 
@@ -151,7 +151,7 @@ function ToolServer:Run()
 
 			return true
 		else
-			if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "ATTACKING" }) then
+			if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "ATTACKING", "NOMOVE" }) then
 				return false
 			end
 

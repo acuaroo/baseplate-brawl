@@ -23,6 +23,7 @@ local sprint = ReplicatedStorage["Events"].Sprint
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local particleHolder = ServerStorage["Assets"].Combat.ParticleHolder
 local stunParticles = particleHolder.StunParticles
+local requestVisual = ReplicatedStorage["Events"].RequestVisual
 
 local sprintTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
 
@@ -119,6 +120,8 @@ Players.PlayerAdded:Connect(function(player)
 
 		self.MovementState = "RUNNING"
 		animRelay:FireClient(player, "Run")
+		requestVisual:FireClient(player, "SprintEffect", { ["Toggle"] = nil })
+
 		TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = 25 }):Play()
 
 		repeat
@@ -128,6 +131,11 @@ Players.PlayerAdded:Connect(function(player)
 		until self.Stamina <= 0 or self.MovementState == "WALKING" or humanoid.MoveDirection.Magnitude == 0
 
 		animRelay:FireClient(player, "Run", true)
+
+		requestVisual:FireClient(player, "SprintEffect", {
+			["Toggle"] = "CLEAN",
+		})
+
 		self:_restamina()
 	end
 
@@ -139,6 +147,10 @@ Players.PlayerAdded:Connect(function(player)
 		if not humanoid then
 			return
 		end
+
+		requestVisual:FireClient(player, "SprintEffect", {
+			["Toggle"] = "CLEAN",
+		})
 
 		self.MovementState = "WALKING"
 		TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = 16 }):Play()
@@ -156,7 +168,6 @@ Players.PlayerAdded:Connect(function(player)
 		playerTrace._restam = false
 
 		if self.MovementState ~= "RUNNING" then
-			animRelay:FireClient(player, "Run", true)
 			return
 		end
 	end
@@ -168,11 +179,12 @@ Players.PlayerAdded:Connect(function(player)
 
 		local humanoid = player.Character:FindFirstChild("Humanoid")
 
-		if not humanoid or self.MovementState == "WALKING" then
+		if not humanoid then
 			return
 		end
 
 		if humanoid.MoveDirection.Magnitude > 0.1 then
+			self.MovementState = "RUNNING"
 			self:_sprint()
 		end
 	end
@@ -239,7 +251,6 @@ function PlayerServer:Run()
 		end
 
 		if on then
-			metaplayer.MovementState = "RUNNING"
 			metaplayer:SprintRequest()
 		else
 			metaplayer.MovementState = "WALKING"
