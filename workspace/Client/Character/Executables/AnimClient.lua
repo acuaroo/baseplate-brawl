@@ -26,57 +26,65 @@ local playing = {}
 
 local AnimClient = {}
 
+local function checkPlaying(req)
+	local animation = playing[req]
+
+	return animation
+end
+
+local function stopAnimation(req)
+	local animation = checkPlaying(req)
+
+	if not animation then
+		return
+	end
+
+	animation:Stop()
+	playing[req] = nil
+end
+
+local function playAnimation(req, delTime, override)
+	local animation = animations:FindFirstChild(req)
+
+	if not animation then
+		return
+	end
+
+	local animLoaded = animator:LoadAnimation(animation)
+
+	repeat
+		task.wait()
+	until animLoaded.Length > 0
+
+	animLoaded:Play()
+	playing[req] = animLoaded
+
+	if override then
+		task.spawn(function()
+			animLoaded.Stopped:Wait()
+			stopAnimation(override)
+		end)
+	end
+
+	if not delTime then
+		return
+	end
+
+	task.delay(delTime, function()
+		stopAnimation(req)
+	end)
+end
+
 function AnimClient:Run()
+	while character.Parent == nil do
+		task.wait()
+	end
+
 	animRelay.OnClientEvent:Connect(function(req, cancel, delTime, override)
-		if not cancel then
-			local animation = animations:FindFirstChild(req)
-
-			if not animation then
-				return
-			end
-
-			while character.Parent == nil do
-				task.wait()
-			end
-
-			local animLoaded = animator:LoadAnimation(animation)
-
-			repeat
-				task.wait()
-			until animLoaded.Length > 0
-
-			if override then
-				animLoaded:Play()
-
-				task.spawn(function()
-					animLoaded.Stopped:Wait()
-
-					if playing[override] then
-						playing[override]:Stop()
-					end
-				end)
-			else
-				animLoaded:Play()
-			end
-
-			playing[req] = animLoaded
-
-			if delTime then
-				task.delay(delTime, function()
-					if animLoaded then
-						animLoaded:Stop()
-						playing[animation] = nil
-					end
-				end)
-			end
+		if cancel then
+			stopAnimation(req)
 		else
-			local animation = playing[req]
-			if not animation then
-				return
-			end
-
-			animation:Stop()
-			playing[req] = nil
+			playAnimation(req, delTime, override)
 		end
 	end)
 end

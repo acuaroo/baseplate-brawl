@@ -52,6 +52,10 @@ function ToolServer:Run()
 
 		local tool = route.new(player, toolobj, config, MetaPlayers[player])
 		toolPrepTable[player][toolobj.Name] = tool
+
+		if tool._config:GetAttribute("EquipFunction") then
+			tool:RunFunctionality(tool._config:GetAttribute("EquipFunction"))
+		end
 	end)
 
 	animRelay.OnServerEvent:Connect(function(player, toolobj)
@@ -125,6 +129,14 @@ function ToolServer:Run()
 	end
 
 	toolEquip.OnServerInvoke = function(player, toolobj, equip)
+		if not player.Character:FindFirstChild("Humanoid") then
+			return
+		end
+
+		if player.Character.Humanoid.Health <= 0 then
+			return
+		end
+
 		if equip then
 			if toolobj.Parent ~= player.Backpack then
 				return -- TODO: punish :)

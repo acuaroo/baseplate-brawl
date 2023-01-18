@@ -1,3 +1,16 @@
+--[[
+
+	GuiClient:Run()
+	-- starts up the gui client, responsible for
+		-hotbar
+		-statuses
+		-health
+		-notifications
+		-stamina
+		-souls
+		
+]]
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
@@ -12,15 +25,15 @@ local hotbarGui = playerGui.Hotbar
 local statsFrame = hotbarGui.StatsFrame
 local hotbarFrame = statsFrame.HotbarFrame
 
-local notificationChannel = ReplicatedStorage["Events"].Notification
-local notificationMain = statsFrame.NotificationMain
-local notificationOpp = statsFrame.NotificationOpp
 local toolEquip = ReplicatedStorage["Events"].ToolEquip
+local notificationChannel = ReplicatedStorage["Events"].Notification
 
+local notificationMain = statsFrame.NotificationMain
 local notificationMainReset = UDim2.new(3, 0, 1.067, 0)
-local notificationOppReset = UDim2.new(-3, 0, 1.067, 0)
-
 local notificationMainOut = UDim2.new(1.407, 0, 1.067, 0)
+
+local notificationOpp = statsFrame.NotificationOpp
+local notificationOppReset = UDim2.new(-3, 0, 1.067, 0)
 local notificationOppOut = UDim2.new(-1.075, 0, 1.067, 0)
 
 local totalHealth = statsFrame.Health.TotalHealth
@@ -39,9 +52,10 @@ local statusFrame = statsFrame.Status
 local statusTemplate = statusFrame.UIListLayout.Status
 
 local tools = backpack:GetChildren()
-local visualOffset = CFrame.new(Vector3.new(0, 1.5, 0), Vector3.new(0, 0, 50))
-local rotationalOffset = CFrame.Angles(math.rad(-45), 0, math.rad(45))
-local toolSizeRatio = 6.24531601299
+
+local VISUAL_OFFSET = CFrame.new(Vector3.new(0, 1.5, 0), Vector3.new(0, 0, 50))
+local ROTATIONAL_OFFSET = CFrame.Angles(math.rad(-45), 0, math.rad(45))
+local TOOL_RATIO = 6.24531601299
 
 local validKeyCodes = {
 	[Enum.KeyCode.One] = { 1, Enum.KeyCode.One },
@@ -70,7 +84,14 @@ local function delayStatus(status)
 		end
 
 		if stat:GetAttribute("Override") then
-			local hover = stat.Hover
+			local hover = stat:FindFirstChild("Hover")
+
+			if not hover then
+				stat:SetAttribute("OverrideValue", nil)
+				stat:SetAttribute("Override", nil)
+				return
+			end
+
 			local overrideVal = stat:GetAttribute("OverrideValue")
 			hover.Description.Text = tostring(overrideVal * 100) .. "x, " .. tostring(status["Duration"]) .. "sec"
 
@@ -121,7 +142,7 @@ local function sortBackpack()
 		if not toolVisual.PrimaryPart then
 			continue
 		end
-		toolVisual:SetPrimaryPartCFrame(visualOffset)
+		toolVisual:SetPrimaryPartCFrame(VISUAL_OFFSET)
 
 		local toolSettings = toolVisual:FindFirstChild("Settings")
 
@@ -140,8 +161,8 @@ local function sortBackpack()
 			local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
 			viewportCamera.CFrame = customCameraCFrame
 		else
-			viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * toolSizeRatio)))
-				* rotationalOffset
+			viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * TOOL_RATIO)))
+				* ROTATIONAL_OFFSET
 		end
 
 		viewportCamera.DiagonalFieldOfView = 0.7

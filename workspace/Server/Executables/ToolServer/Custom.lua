@@ -16,6 +16,7 @@ local combatAssets = ServerStorage["Assets"].Combat
 local meteor = combatAssets.Meteor
 local warning = combatAssets.Warning
 local warningSizeTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local meteorSpinOn = true
 
 local BASEY = workspace:WaitForChild("baseplate").BASEY.Position.Y
 
@@ -89,6 +90,55 @@ local activate = {
 
 			meteorClone:Destroy()
 			warningClone:Destroy()
+		end)
+	end,
+}
+
+local equipFunctionality = {
+	["meteorOrbit"] = function(self)
+		local tool = self._tool
+		local build = tool.Build.Detail
+
+		local mainMeteor = build.MainMeteor
+
+		local meteor1 = mainMeteor.Meteor1
+		local meteor2 = mainMeteor.Meteor2
+		local meteor3 = mainMeteor.Meteor3
+
+		task.spawn(function()
+			while meteorSpinOn do
+				mainMeteor.Orientation += Vector3.new(0, 0.4, 0)
+				task.wait()
+			end
+		end)
+
+		task.spawn(function()
+			while meteorSpinOn do
+				meteor1.Orientation += Vector3.new(0, 0.2, 3)
+				task.wait()
+			end
+		end)
+
+		task.spawn(function()
+			local directionTick = 0.5
+
+			while meteorSpinOn do
+				if directionTick <= -0.5 then
+					directionTick = 0.5
+				else
+					directionTick -= 0.01
+				end
+
+				meteor2.Orientation += Vector3.new(directionTick / 2, directionTick, directionTick / 3)
+				task.wait()
+			end
+		end)
+
+		task.spawn(function()
+			while meteorSpinOn do
+				meteor3.Orientation += Vector3.new(1, 0.75, 0)
+				task.wait()
+			end
 		end)
 	end,
 }
@@ -169,6 +219,12 @@ function Custom:Ability(playerData)
 
 	if ability[call] then
 		ability[call](self, playerData)
+	end
+end
+
+function Custom:RunFunctionality(name)
+	if equipFunctionality[name] then
+		equipFunctionality[name](self)
 	end
 end
 

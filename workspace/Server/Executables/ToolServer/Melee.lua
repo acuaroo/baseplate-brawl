@@ -187,18 +187,10 @@ function Melee:Activate()
 
 	self._metaplayer:SetPrimary("ATTACKING")
 
-	local randomPitch = math.random(95, 105) / 100
-
-	self._tool.Swing.Shift.Octave = randomPitch
-	self._tool.Swing:Play()
-
 	self._castConnection = self.Caster.HumanoidCollided:Connect(function(ray, humanoid)
 		if self.quickDebounce[humanoid] or not self._meleeValid then
 			return
 		end
-
-		self._tool.Hit.Shift.Octave = randomPitch
-		self._tool.Hit:Play()
 
 		self.quickDebounce[humanoid] = true
 

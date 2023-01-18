@@ -7,6 +7,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
 local sprint = ReplicatedStorage["Events"].Sprint
+local sprintKey = Enum.KeyCode.LeftShift
 
 local RunClient = {}
 
@@ -16,10 +17,8 @@ function RunClient:Run()
 			return
 		end
 
-		if humanoid.MoveDirection.Magnitude >= 0 then
-			if input.KeyCode == Enum.KeyCode.LeftShift then
-				sprint:FireServer(true)
-			end
+		if humanoid.MoveDirection.Magnitude >= 0 and input.KeyCode == sprintKey then
+			sprint:FireServer(true)
 		end
 	end)
 
@@ -28,7 +27,7 @@ function RunClient:Run()
 			return
 		end
 
-		if input.KeyCode == Enum.KeyCode.LeftShift then
+		if input.KeyCode == sprintKey then
 			sprint:FireServer(false)
 		end
 	end)
