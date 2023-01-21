@@ -6,12 +6,6 @@ local notificationChannel = ReplicatedStorage["Events"].Notification
 local particleHolder = ServerStorage["Assets"].Particles.ParticleHolder
 
 local effectDescriptions = {
-	["Stamina"] = {
-		["Name"] = "stamina regen",
-		["Effect"] = -0.3,
-		["Duration"] = 0,
-		["Image"] = "rbxassetid://11684108736",
-	},
 	["Regeneration"] = {
 		["Name"] = "regeneration",
 		["Effect"] = -0.5,
@@ -123,7 +117,6 @@ local statusEffects = {
 	["BrokenBone"] = function(humanoid, duration)
 		subEffects["normalEffect"](humanoid, duration, "Regeneration", -0.5)
 		subEffects["normalEffect"](humanoid, duration, "Speed", -0.3)
-		subEffects["normalEffect"](humanoid, duration, "Stamina", -0.3)
 
 		local player = Players:GetPlayerFromCharacter(humanoid.Parent)
 
@@ -138,7 +131,6 @@ local statusEffects = {
 				},
 				true,
 				{
-					fetchEffect("Stamina", duration, -0.5),
 					fetchEffect("Regeneration", duration, -0.5),
 					fetchEffect("Speed", duration, -0.3),
 				}

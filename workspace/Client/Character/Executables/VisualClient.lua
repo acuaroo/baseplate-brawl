@@ -1,17 +1,27 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local ScreenShake = require(script.Parent["Modules"].ScreenShake)
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
+local camera = workspace.CurrentCamera
 
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 local particleHolder = ReplicatedStorage["Assets"].ParticleHolder
 local sprintParticle = particleHolder.SprintParticle
 
+local sprintTweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false)
+
+local sprintFovIn = TweenService:Create(camera, sprintTweenInfo, { FieldOfView = 80 })
+local sprintFovOut = TweenService:Create(camera, sprintTweenInfo, { FieldOfView = 70 })
+
 local visualFunctions = {
 	["SprintEffect"] = function(_)
-		if not character:FindFirstChild("Humanoid") then
+		local humanoid = character:FindFirstChild("Humanoid")
+
+		if not humanoid then
 			return
 		end
 
@@ -26,10 +36,10 @@ local visualFunctions = {
 		sprintLeft.Parent = humanoidRP
 		sprintRight.Parent = humanoidRP
 		sprintRight.Position = Vector3.new(1.5, -1, 0.5)
+
+		sprintFovIn:Play()
 	end,
 	["ScreenShake"] = function(args)
-		local camera = workspace.CurrentCamera
-
 		local function ShakeCamera(shakeCf)
 			camera.CFrame = camera.CFrame * shakeCf
 		end
@@ -65,6 +75,8 @@ local visualCleanup = {
 		if humanoidRP:FindFirstChild("SprintRight") then
 			humanoidRP.SprintRight:Destroy()
 		end
+
+		sprintFovOut:Play()
 	end,
 }
 

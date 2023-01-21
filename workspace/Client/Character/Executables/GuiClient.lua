@@ -6,7 +6,6 @@
 		-statuses
 		-health
 		-notifications
-		-stamina
 		-souls
 		
 ]]
@@ -39,14 +38,8 @@ local notificationOppOut = UDim2.new(-1.075, 0, 1.067, 0)
 local totalHealth = statsFrame.Health.TotalHealth
 local currentHealth = totalHealth.CurrentHealth
 
-local totalStamina = statsFrame.Stamina.TotalStamina
-local currentStamina = totalStamina.CurrentStamina
-local lowStamina = Color3.fromRGB(255, 116, 118)
-local normalStamina = Color3.fromRGB(162, 220, 162)
-
 local soulCount = statsFrame.Souls.TextLabel
 local souls = player:WaitForChild("leaderstats").souls
-local staminaReplicate = player:WaitForChild("REPLICATEVALS").STAMINA
 
 local statusFrame = statsFrame.Status
 local statusTemplate = statusFrame.UIListLayout.Status
@@ -298,17 +291,6 @@ function GuiClient:Run()
 
 			toolCheck(currentTool)
 		end
-	end)
-
-	staminaReplicate.Changed:Connect(function()
-		local newPos = staminaReplicate.Value / 200
-		currentStamina.BackgroundColor3 = normalStamina
-
-		if newPos < 0.25 then
-			currentStamina.BackgroundColor3 = lowStamina
-		end
-
-		currentStamina:TweenSize(UDim2.new(newPos, 0, 1, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.1)
 	end)
 
 	humanoid.HealthChanged:Connect(function()
