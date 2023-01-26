@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
+--local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local ContextActionService = game:GetService("ContextActionService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -11,26 +12,18 @@ local sprintKey = Enum.KeyCode.LeftShift
 
 local RunClient = {}
 
+local function handleSprintInput(_, actionState)
+	if actionState == Enum.UserInputState.Begin and humanoid.MoveDirection.Magnitude >= 0 then
+		sprint:FireServer(true)
+	else
+		sprint:FireServer(false)
+	end
+end
+
 function RunClient:Run()
-	UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then
-			return
-		end
-
-		if humanoid.MoveDirection.Magnitude >= 0 and input.KeyCode == sprintKey then
-			sprint:FireServer(true)
-		end
-	end)
-
-	UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		if gameProcessed then
-			return
-		end
-
-		if input.KeyCode == sprintKey then
-			sprint:FireServer(false)
-		end
-	end)
+	ContextActionService:BindAction("StartSprint", handleSprintInput, true, sprintKey)
+	ContextActionService:SetImage("StartSprint", "rbxassetid://11684108736")
+	ContextActionService:SetPosition("StartSprint", UDim2.new(0.45, 0, 0, 0))
 end
 
 return RunClient

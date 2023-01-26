@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ContextActionService = game:GetService("ContextActionService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -16,8 +16,6 @@ local animRelay = ReplicatedStorage["Events"].AnimRelay
 local animations = ReplicatedStorage["Animations"]
 
 local activatedCon
-local offhandCon
-local offhandDiscon
 local spearCon
 
 local ToolClient = {}
@@ -28,15 +26,7 @@ local function cleanupConnections()
 		activatedCon = nil
 	end
 
-	if offhandCon then
-		offhandCon:Disconnect()
-		offhandCon = nil
-	end
-
-	if offhandDiscon then
-		offhandDiscon:Disconnect()
-		offhandDiscon = nil
-	end
+	ContextActionService:UnbindAction("OffhandInput")
 end
 
 function ToolClient:Run()
@@ -86,6 +76,7 @@ function ToolClient:Run()
 	local function toolf(tool, config)
 		activatedCon = tool.Activated:Connect(function()
 			local valid = nil
+
 			if config:GetAttribute("Ability") then
 				local args = {
 					mouse.Hit.Position,
@@ -119,12 +110,8 @@ function ToolClient:Run()
 			end
 		end)
 
-		offhandCon = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-			if gameProcessed then
-				return
-			end
-
-			if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		local function handleOffhandInput(_, actionState)
+			if actionState == Enum.UserInputState.Begin then
 				local valid = toolOffhand:InvokeServer(tool, config, true)
 
 				if valid then
@@ -134,15 +121,7 @@ function ToolClient:Run()
 						init[subCall](character, tool)
 					end
 				end
-			end
-		end)
-
-		offhandDiscon = UserInputService.InputEnded:Connect(function(input, gameProcessed)
-			if gameProcessed then
-				return
-			end
-
-			if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			else
 				local subCall = config:GetAttribute("SubClass")
 
 				if subCall and functionality[subCall] then
@@ -151,7 +130,43 @@ function ToolClient:Run()
 
 				toolOffhand:InvokeServer(tool, config, false)
 			end
-		end)
+		end
+
+		ContextActionService:BindAction("OffhandInput", handleOffhandInput, false, Enum.UserInputType.MouseButton2)
+
+		-- offhandCon = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		-- 	if gameProcessed then
+		-- 		return
+		-- 	end
+
+		-- 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		-- 		local valid = toolOffhand:InvokeServer(tool, config, true)
+
+		-- 		if valid then
+		-- 			local subCall = config:GetAttribute("SubClass")
+
+		-- 			if subCall and init[subCall] then
+		-- 				init[subCall](character, tool)
+		-- 			end
+		-- 		end
+		-- 	end
+		-- end)
+
+		-- offhandDiscon = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+		-- 	if gameProcessed then
+		-- 		return
+		-- 	end
+
+		-- 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		-- 		local subCall = config:GetAttribute("SubClass")
+
+		-- 		if subCall and functionality[subCall] then
+		-- 			functionality[subCall](character, tool)
+		-- 		end
+
+		-- 		toolOffhand:InvokeServer(tool, config, false)
+		-- 	end
+		-- end)
 
 		tool.Unequipped:Connect(function()
 			animRelay:FireServer(tool)
