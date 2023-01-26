@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
 local combatAssets = ServerStorage["Assets"].Combat
@@ -32,6 +33,45 @@ local function indicatorTween(indicator)
 	)
 end
 
+function DamageHandler:Tag(player, enemyHumanoid, tagLength)
+	local enemyPlayer = Players:GetPlayerFromCharacter(enemyHumanoid.Parent)
+
+	if not enemyPlayer then
+		return
+	end
+
+	local existingTag = enemyPlayer:FindFirstChildOfClass("ObjectValue")
+	local combatTag
+
+	if existingTag then
+		combatTag = existingTag
+	else
+		combatTag = Instance.new("ObjectValue")
+	end
+
+	combatTag.Name = tostring(os.time())
+	combatTag.Value = player
+	combatTag.Parent = enemyPlayer
+
+	task.spawn(function()
+		task.wait(tagLength)
+
+		if combatTag and combatTag.Value == player then
+			combatTag:Destroy()
+		end
+	end)
+end
+
+function DamageHandler:FindTag(player)
+	local existingTag = player:FindFirstChildOfClass("ObjectValue")
+
+	if existingTag then
+		return existingTag.Value
+	end
+
+	return nil
+end
+
 function DamageHandler:Indicate(hitLocus, damage, isCrit)
 	local indicator = nil
 
@@ -55,6 +95,7 @@ function DamageHandler:Indicate(hitLocus, damage, isCrit)
 end
 
 function DamageHandler:Damage(player, enemyHumanoid, _, config, indicate, hitLocus)
+	local tagLength = config:GetAttribute("TagLength") or 30
 	local baseDamage = config:GetAttribute("BaseDamage")
 	local critChance = config:GetAttribute("CritChance")
 	local critMult = config:GetAttribute("CritMult")
@@ -83,6 +124,8 @@ function DamageHandler:Damage(player, enemyHumanoid, _, config, indicate, hitLoc
 			damage += (damage * damageIntakeModifier)
 		end
 	end
+
+	DamageHandler:Tag(player, enemyHumanoid, tagLength)
 
 	damage = math.floor(damage)
 	enemyHumanoid:TakeDamage(damage)

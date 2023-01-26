@@ -119,7 +119,7 @@ function ToolServer:Run()
 		if tool.OffDebouncing then
 			return false
 		end
-		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "RUNNING", "FUNCTIONAL", "GRAB", "NOMOVE" }) then
+		if toolParse(MetaPlayers[player], { "STUN", "RUNNING", "FUNCTIONAL", "GRAB", "NOMOVE" }) then
 			return false
 		end
 

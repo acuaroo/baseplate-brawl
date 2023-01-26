@@ -15,7 +15,7 @@ local RunClient = {}
 local function handleSprintInput(_, actionState)
 	if actionState == Enum.UserInputState.Begin and humanoid.MoveDirection.Magnitude >= 0 then
 		sprint:FireServer(true)
-	else
+	elseif actionState == Enum.UserInputState.End then
 		sprint:FireServer(false)
 	end
 end

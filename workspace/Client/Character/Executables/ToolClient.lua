@@ -121,7 +121,7 @@ function ToolClient:Run()
 						init[subCall](character, tool)
 					end
 				end
-			else
+			elseif actionState == Enum.UserInputState.End then
 				local subCall = config:GetAttribute("SubClass")
 
 				if subCall and functionality[subCall] then
@@ -132,7 +132,8 @@ function ToolClient:Run()
 			end
 		end
 
-		ContextActionService:BindAction("OffhandInput", handleOffhandInput, false, Enum.UserInputType.MouseButton2)
+		ContextActionService:BindAction("OffhandInput", handleOffhandInput, true, Enum.UserInputType.MouseButton2)
+		ContextActionService:SetImage("OffhandInput", "http://www.roblox.com/asset/?id=11554338960")
 
 		-- offhandCon = UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		-- 	if gameProcessed then

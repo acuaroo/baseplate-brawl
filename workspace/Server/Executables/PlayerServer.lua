@@ -21,8 +21,8 @@ local Trove = require(ServerStorage["Modules"].Trove)
 
 local sprint = ReplicatedStorage["Events"].Sprint
 local animRelay = ReplicatedStorage["Events"].AnimRelay
-local particleHolder = ServerStorage["Assets"].Combat.ParticleHolder
-local stunParticles = particleHolder.StunParticles
+-- local particleHolder = ServerStorage["Assets"].Combat.ParticleHolder
+-- local stunParticles = particleHolder.StunParticles
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 
 local sprintTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
@@ -42,7 +42,12 @@ local DEFAULT_REGEN = 100
 local PlayerServer = {}
 
 local function adjustSpeed(player, new)
+	if not player.Character then
+		return
+	end
+
 	local humanoid = player.Character:FindFirstChild("Humanoid")
+
 	if not humanoid then
 		return
 	end
@@ -50,15 +55,15 @@ local function adjustSpeed(player, new)
 	humanoid.WalkSpeed = new
 end
 
-local function emitParticles(player, particles, amount)
-	local head = player.Character:FindFirstChild("Head")
-	particles = particles:Clone()
-	particles.Parent = head
+-- local function emitParticles(player, particles, amount)
+-- 	local head = player.Character:FindFirstChild("Head")
+-- 	particles = particles:Clone()
+-- 	particles.Parent = head
 
-	for _, part in pairs(particles:GetChildren()) do
-		part:Emit(amount)
-	end
-end
+-- 	for _, part in pairs(particles:GetChildren()) do
+-- 		part:Emit(amount)
+-- 	end
+-- end
 
 Players.PlayerAdded:Connect(function(player)
 	local playerTrace = {}
@@ -84,13 +89,9 @@ Players.PlayerAdded:Connect(function(player)
 		elseif self.PrimaryState == "NONE" then
 			adjustSpeed(player, 16)
 		elseif self.PrimaryState == "STUN" then
-			local humanoid = player.Character:FindFirstChild("Humanoid")
 			adjustSpeed(player, 5)
-
-			humanoid:UnequipTools()
+			--humanoid:UnequipTools()
 			self.MovementState = "WALKING"
-
-			emitParticles(player, stunParticles, 3)
 		elseif self.PrimaryState == "NOMOVE" then
 			adjustSpeed(player, 0)
 		end

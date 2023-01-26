@@ -213,7 +213,7 @@ function Melee:Activate()
 		if playerEnemy then
 			animRelay:FireClient(playerEnemy, address, false)
 
-			self._metaplayer:ImposePrimary("STUNLOCK", playerEnemy, 0.27)
+			self._metaplayer:ImposePrimary("STUNLOCK", playerEnemy, 0.5)
 		else
 			local animLoaded = humanoid:LoadAnimation(animations[address])
 			animLoaded:Play()
@@ -256,6 +256,7 @@ function Melee:Shield(animationHeader, shield)
 	if self.shieldDebounce[shield] then
 		return
 	end
+
 	self.shieldDebounce[shield] = true
 
 	local shieldHealth = shield:GetAttribute("Health")
@@ -270,71 +271,69 @@ function Melee:Shield(animationHeader, shield)
 
 	local character = self.Owner.Character
 	local humanoidRP = character:FindFirstChild("HumanoidRootPart")
+	self._metaplayer:SetPrimary("STUN")
+
+	local enemy = Players:GetPlayerFromCharacter(shield.Parent)
+
+	if enemy then
+		animRelay:FireClient(enemy, animationHeader .. "Offhand", true)
+		self._metaplayer:ImposePrimary("NONE", enemy)
+
+		local enemyWeapon = shield.Parent:FindFirstChildWhichIsA("Tool")
+
+		if not enemyWeapon then
+			return
+		end
+		local enemySelf = meleehooks[enemy.Name .. enemyWeapon.Name .. enemyWeapon.Config:GetAttribute("HookID")]
+
+		if meleehooks[enemy.Name .. enemyWeapon.Name .. enemyWeapon.Config:GetAttribute("HookID")] then
+			enemySelf:OffDebounce("OffDebounceTime")
+		end
+	end
+
+	local box = shield.Box
+	box.Parent = workspace
+	box.Anchored = true
+
+	for _, particle in box.ShieldBreak:GetChildren() do
+		particle:Emit(3)
+	end
+	animRelay:FireClient(self.Owner, animHeaderOwner .. flippedDirection .. "Swing", true)
+	animRelay:FireClient(self.Owner, "Stun")
+
+	requestVisual:FireClient(self.Owner, "ScreenShake", {
+		["Toggle"] = nil,
+		["Magnitude"] = 10,
+		["Roughness"] = 2,
+		["FadeIn"] = 0.25,
+		["FadeOut"] = 0.25,
+		["PosInfluence"] = Vector3.new(0.05, 0.05, 0.05),
+		["RotInfluence"] = Vector3.new(1, 1.5, 1),
+	})
+
+	local attachment = self._trove:Add(Instance.new("Attachment"))
+	attachment.Parent = humanoidRP
+	attachment.Name = "SHIELDATT"
+
+	local knockback = self._trove:Add(Instance.new("LinearVelocity"))
+	knockback.Attachment0 = attachment
+	knockback.MaxForce = math.huge
+	knockback.Parent = attachment
+	knockback.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+	knockback.VectorVelocity = humanoidRP.CFrame.LookVector * -knockPower
+
+	task.delay(knockDuration, function()
+		attachment:Destroy()
+
+		task.wait(platformDuration)
+		self._meleeValid = true
+		animRelay:FireClient(self.Owner, "Stun", true)
+		self._metaplayer:SetPrimary("NONE")
+		box:Destroy()
+	end)
 
 	if shieldHealth <= 0 then
-		self._metaplayer:SetPrimary("STUN")
-
-		local enemy = Players:GetPlayerFromCharacter(shield.Parent)
-
-		if enemy then
-			animRelay:FireClient(enemy, animationHeader .. "Offhand", true)
-			self._metaplayer:ImposePrimary("NONE", enemy)
-
-			local enemyWeapon = shield.Parent:FindFirstChildWhichIsA("Tool")
-
-			if not enemyWeapon then
-				return
-			end
-			local enemySelf = meleehooks[enemy.Name .. enemyWeapon.Name .. enemyWeapon.Config:GetAttribute("HookID")]
-
-			if meleehooks[enemy.Name .. enemyWeapon.Name .. enemyWeapon.Config:GetAttribute("HookID")] then
-				enemySelf:OffDebounce("OffDebounceTime")
-			end
-		end
-
-		local box = shield.Box
-		box.Parent = workspace
-		box.Anchored = true
-
-		for _, particle in box.ShieldBreak:GetChildren() do
-			particle:Emit(3)
-		end
-
 		shield:Destroy()
-
-		animRelay:FireClient(self.Owner, animHeaderOwner .. flippedDirection .. "Swing", true)
-		animRelay:FireClient(self.Owner, "Stun")
-
-		requestVisual:FireClient(self.Owner, "ScreenShake", {
-			["Toggle"] = nil,
-			["Magnitude"] = 3,
-			["Roughness"] = 2,
-			["FadeIn"] = 0.25,
-			["FadeOut"] = 0.5,
-			["PosInfluence"] = Vector3.new(0.15, 0.15, 0.15),
-			["RotInfluence"] = Vector3.new(1, 1.5, 1),
-		})
-
-		local attachment = self._trove:Add(Instance.new("Attachment"))
-		attachment.Parent = humanoidRP
-		attachment.Name = "SHIELDATT"
-
-		local knockback = self._trove:Add(Instance.new("LinearVelocity"))
-		knockback.Attachment0 = attachment
-		knockback.MaxForce = math.huge
-		knockback.Parent = attachment
-		knockback.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
-		knockback.VectorVelocity = humanoidRP.CFrame.LookVector * -knockPower
-
-		task.delay(knockDuration, function()
-			attachment:Destroy()
-
-			task.wait(platformDuration)
-			self._meleeValid = true
-			animRelay:FireClient(self.Owner, "Stun", true)
-			self._metaplayer:SetPrimary("NONE")
-			box:Destroy()
-		end)
 	end
 end
 
