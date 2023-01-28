@@ -7,7 +7,7 @@ local Settings = {
 	DebugMode = false, -- DebugMode visualizes the rays, from last to current position
 	DebugColor = Color3.new(1, 0, 0), -- The color of the visualized ray
 	DebugLifetime = 1, -- Lifetime of the visualized trail
-	AutoSetup = true -- Automatically creates a LocalScript and a RemoteEvent to establish a connection to the server, from the client.
+	AutoSetup = true, -- Automatically creates a LocalScript and a RemoteEvent to establish a connection to the server, from the client.
 }
 
 if Settings.AutoSetup then
@@ -53,7 +53,7 @@ local function SerializeParams(Params)
 		FilterDescendantsInstances = Params.FilterDescendantsInstances,
 		FilterType = Params.FilterType.Name,
 		IgnoreWater = Params.IgnoreWater,
-		CollisionGroup = Params.CollisionGroup
+		CollisionGroup = Params.CollisionGroup,
 	}
 end
 local function IsA(Object, Type)
@@ -88,10 +88,13 @@ local function IsValid(SerializedResult)
 		return false
 	end
 
-	return (SerializedResult.Instance ~= nil and (SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain"))) and
-		IsA(SerializedResult.Position, "Vector3") and
-		IsA(SerializedResult.Material, "EnumItem") and
-		IsA(SerializedResult.Normal, "Vector3")
+	return (
+		SerializedResult.Instance ~= nil
+		and (SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain"))
+	)
+		and IsA(SerializedResult.Position, "Vector3")
+		and IsA(SerializedResult.Material, "EnumItem")
+		and IsA(SerializedResult.Normal, "Vector3")
 end
 
 local Replication = {}
@@ -107,7 +110,7 @@ function ReplicationBase:Start()
 		Object = self.Object,
 		Debug = self.Caster._Debug,
 		RaycastParams = SerializeParams(self.RaycastParams),
-		Id = self.Caster._UniqueId
+		Id = self.Caster._UniqueId,
 	})
 
 	local LocalizedConnection
@@ -141,7 +144,7 @@ function ReplicationBase:Update(AdditionalData)
 		Object = self.Object,
 		Debug = self.Caster._Debug,
 		RaycastParams = SerializeParams(self.RaycastParams),
-		Id = self.Caster._UniqueId
+		Id = self.Caster._UniqueId,
 	}
 	ReplicationRemote:FireClient(self.Owner, "Update", Data, AdditionalData)
 end
@@ -151,7 +154,7 @@ function ReplicationBase:Stop(Destroying)
 	ReplicationRemote:FireClient(Owner, Destroying and "Destroy" or "Stop", {
 		Owner = Owner,
 		Object = self.Object,
-		Id = self.Caster._UniqueId
+		Id = self.Caster._UniqueId,
 	})
 
 	local ReplicationConnection = self.Connection
@@ -183,7 +186,7 @@ function Replication.new(Player, Object, RaycastParameters, Caster)
 		Owner = Player,
 		Object = Object,
 		RaycastParams = RaycastParameters,
-		Caster = Caster
+		Caster = Caster,
 	}, ReplicationBase)
 end
 
@@ -192,7 +195,7 @@ local ClientCaster = {}
 local TrailTransparency = NumberSequence.new({
 	NumberSequenceKeypoint.new(0, 0),
 	NumberSequenceKeypoint.new(0.5, 0),
-	NumberSequenceKeypoint.new(1, 1)
+	NumberSequenceKeypoint.new(1, 1),
 })
 local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
@@ -201,7 +204,7 @@ function ClientCaster:DisableDebug()
 
 	if ReplicationConnection then
 		ReplicationConnection:Update({
-			Debug = false
+			Debug = false,
 		})
 	end
 
@@ -215,7 +218,7 @@ function ClientCaster:StartDebug()
 
 	if ReplicationConnection then
 		ReplicationConnection:Update({
-			Debug = true
+			Debug = true,
 		})
 	end
 
@@ -227,7 +230,7 @@ end
 
 local CollisionBaseName = {
 	Collided = "Any",
-	HumanoidCollided = "Humanoid"
+	HumanoidCollided = "Humanoid",
 }
 
 function ClientCaster:Start()
@@ -367,7 +370,7 @@ function ClientCaster:SetObject(Object)
 			end
 
 			ReplicationConnection:Update({
-				Object = Object
+				Object = Object,
 			})
 		end
 	end)
@@ -386,7 +389,7 @@ function ClientCaster:EditRaycastParams(RaycastParameters)
 				task.wait(1 - Remainder)
 			end
 			ReplicationConnection:Update({
-				RaycastParams = RaycastParameters
+				RaycastParams = RaycastParameters,
 			})
 		end)
 	end
@@ -404,7 +407,7 @@ function ClientCaster:SetRecursive(Bool)
 		local ReplicationConnection = self._ReplicationConnection
 		if ReplicationConnection then
 			ReplicationConnection:Update({
-				Recursive = Bool
+				Recursive = Bool,
 			})
 		end
 	end)
@@ -436,7 +439,11 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	local DamagePoints = {}
 
 	local function OnDamagePointAdded(Attachment)
-		if Attachment.ClassName == "Attachment" and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
+		if
+			Attachment.ClassName == "Attachment"
+			and Attachment.Name == Settings.AttachmentName
+			and not DamagePoints[Attachment]
+		then
 			local DirectChild = Attachment.Parent == CasterObject.Object
 			DamagePoints[Attachment] = DirectChild
 
@@ -482,7 +489,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 
 		_CollidedEvents = {
 			Humanoid = {},
-			Any = {}
+			Any = {},
 		},
 		_ToClean = {},
 		_Created = time(),
@@ -493,7 +500,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 		_DamagePoints = DamagePoints,
 		_DebugTrails = DebugTrails,
 		_OnDamagePointAdded = OnDamagePointAdded,
-		_Class = "Caster"
+		_Class = "Caster",
 	}, ClientCaster)
 
 	for _, Descendant in next, Object:GetDescendants() do
@@ -501,7 +508,8 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	end
 
 	CasterObject._DescendantConnection = Object.DescendantAdded:Connect(OnDamagePointAdded)
-	CasterObject._ReplicationConnection = NetworkOwner ~= nil and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
+	CasterObject._ReplicationConnection = NetworkOwner ~= nil
+		and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
 	return CasterObject
 end
 

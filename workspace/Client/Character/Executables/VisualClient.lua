@@ -1,7 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local ScreenShake = require(script.Parent["Modules"].ScreenShake)
+
 --local RunService = game:GetService("RunService")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
@@ -9,10 +11,13 @@ local character = player.Character or player.CharacterAdded:Wait()
 local camera = workspace.CurrentCamera
 
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
-local particleHolder = ReplicatedStorage["Assets"].ParticleHolder
-local sprintParticle = particleHolder.SprintParticle
+local particleHolder = ReplicatedStorage["Assets"]["Particles"].ParticleHolder
+local shockwave = ReplicatedStorage["Assets"]["Combat"].Shockwave
+local backSprint = particleHolder.BackSprint
+local frontSprint = particleHolder.FrontSprint
 
 local sprintTweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false)
+local shockTweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false)
 
 local sprintFovIn = TweenService:Create(camera, sprintTweenInfo, { FieldOfView = 80 })
 local sprintFovOut = TweenService:Create(camera, sprintTweenInfo, { FieldOfView = 70 })
@@ -25,17 +30,26 @@ local visualFunctions = {
 			return
 		end
 
-		local humanoidRP = character:FindFirstChild("HumanoidRootPart")
+		local leftArm = character:FindFirstChild("Left Arm")
+		local rightArm = character:FindFirstChild("Right Arm")
 
-		local sprintLeft = sprintParticle:Clone()
-		local sprintRight = sprintParticle:Clone()
+		local sprintLB = backSprint:Clone()
+		local sprintLF = frontSprint:Clone()
 
-		sprintLeft.Name = "SprintLeft"
-		sprintRight.Name = "SprintRight"
+		sprintLB.Parent = leftArm
+		sprintLF.Parent = leftArm
 
-		sprintLeft.Parent = humanoidRP
-		sprintRight.Parent = humanoidRP
-		sprintRight.Position = Vector3.new(1.5, -1, 0.5)
+		sprintLB.Trail.Attachment0 = sprintLB
+		sprintLB.Trail.Attachment1 = sprintLF
+
+		local sprintRB = backSprint:Clone()
+		local sprintRF = frontSprint:Clone()
+
+		sprintRB.Parent = rightArm
+		sprintRF.Parent = rightArm
+
+		sprintRB.Trail.Attachment0 = sprintRB
+		sprintRB.Trail.Attachment1 = sprintRF
 
 		sprintFovIn:Play()
 	end,
@@ -58,6 +72,48 @@ local visualFunctions = {
 			args["RotInfluence"]
 		)
 	end,
+	["CharacterTilt"] = function(_)
+		local rotFrontBack = 0.1
+		local rotLeftRight = 0.1
+		local rotSpeed = 0.1
+		local humanoidRP = character:FindFirstChild("HumanoidRootPart")
+		local humanoid = character:FindFirstChild("Humanoid")
+
+		if not humanoidRP or not humanoid then
+			return
+		end
+
+		local originalC0 = humanoidRP.RootJoint.C0
+
+		RunService.RenderStepped:Connect(function(_)
+			if not humanoidRP or not humanoid or not humanoidRP:FindFirstChild("RootJoint") then
+				return
+			end
+
+			local dotFrontBack = humanoidRP.CFrame.LookVector:Dot(humanoid.MoveDirection)
+			local dotLeftRight = humanoidRP.CFrame.RightVector:Dot(humanoid.MoveDirection)
+
+			humanoidRP.RootJoint.C0 = humanoidRP.RootJoint.C0:Lerp(
+				originalC0 * CFrame.Angles(dotFrontBack * rotFrontBack, -dotLeftRight * rotLeftRight, 0),
+				rotSpeed
+			)
+		end)
+	end,
+	["MeteorImpact"] = function(args)
+		local newShock = shockwave:Clone()
+		newShock.Parent = workspace.Debris
+		newShock.Position = args[1]
+
+		local newShockTween = TweenService:Create(newShock, shockTweenInfo, { Size = Vector3.new(25, 3, 25) })
+		newShockTween:Play()
+		newShockTween.Completed:Wait()
+
+		local newShockFade = TweenService:Create(newShock, shockTweenInfo, { Transparency = 1 })
+		newShockFade:Play()
+		newShockFade.Completed:Wait()
+
+		newShock:Destroy()
+	end,
 }
 
 local visualCleanup = {
@@ -66,14 +122,17 @@ local visualCleanup = {
 			return
 		end
 
-		local humanoidRP = character:FindFirstChild("HumanoidRootPart")
+		local leftArm = character:FindFirstChild("Left Arm")
+		local rightArm = character:FindFirstChild("Right Arm")
 
-		if humanoidRP:FindFirstChild("SprintLeft") then
-			humanoidRP.SprintLeft:Destroy()
+		if leftArm:FindFirstChild("BackSprint") then
+			leftArm.BackSprint:Destroy()
+			leftArm.FrontSprint:Destroy()
 		end
 
-		if humanoidRP:FindFirstChild("SprintRight") then
-			humanoidRP.SprintRight:Destroy()
+		if rightArm:FindFirstChild("BackSprint") then
+			rightArm.BackSprint:Destroy()
+			rightArm.FrontSprint:Destroy()
 		end
 
 		sprintFovOut:Play()
@@ -83,6 +142,8 @@ local visualCleanup = {
 local VisualClient = {}
 
 function VisualClient:Run()
+	visualFunctions["CharacterTilt"]()
+
 	requestVisual.OnClientEvent:Connect(function(name, args)
 		local toggle = args["Toggle"]
 

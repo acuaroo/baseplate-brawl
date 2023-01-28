@@ -3,7 +3,7 @@
 ]]
 
 local ServerStorage = game:GetService("ServerStorage")
---local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Tool = require(script.Parent.Tool)
@@ -11,12 +11,15 @@ local Trove = require(ServerStorage["Modules"].Trove)
 --local ClientCast = require(ServerStorage["Modules"].ClientCast)
 local DamageHandler = require(ServerStorage["Modules"].DamageHandler)
 local StatusHandler = require(ServerStorage["Modules"].StatusHandler)
+--local RockHandler = require(ServerStorage["Modules"].RockHandler)
 
 local combatAssets = ServerStorage["Assets"].Combat
 local meteor = combatAssets.Meteor
 local warning = combatAssets.Warning
 local warningSizeTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 local meteorSpinOn = true
+
+local requestVisual = ReplicatedStorage["Events"].RequestVisual
 
 local BASEY = workspace:WaitForChild("baseplate").BASEY.Position.Y
 
@@ -30,7 +33,7 @@ local activate = {
 		local range = self._config:GetAttribute("Range")
 		local lifeTime = self._config:GetAttribute("LifeTime")
 
-		self._metaplayer:SetPrimary("NOMOVE")
+		self._metaplayer:SetPrimary("SLOW")
 
 		if not humanoidRP or not mousePosition then
 			return
@@ -44,7 +47,9 @@ local activate = {
 		local meteorClone = self._trove:Add(meteor:Clone())
 		meteorClone.Parent = workspace
 		meteorClone.CFrame = CFrame.new(mousePosition) + Vector3.new(0, 50, 0)
+
 		local humanoidList = {}
+		local warningList = {}
 
 		local meteorConnection = meteorClone.Touched:Connect(function(obj)
 			local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
@@ -73,19 +78,45 @@ local activate = {
 		local warningCloneSize = warningClone.Size
 		warningClone.Size = Vector3.new(0.75, 1, 1)
 
+		local warningValid = false
+
 		local warningTween = TweenService:Create(warningClone, warningSizeTweenInfo, { Size = warningCloneSize })
 		warningTween:Play()
 
 		meteorClone.Anchored = false
 
-		task.delay(lifeTime / 2, function()
+		local warningConnection = warningClone.Touched:Connect(function(obj)
+			local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
+
+			if humanoid and not warningList[humanoid] and warningValid then
+				warningList[humanoid] = true
+
+				StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
+			end
+		end)
+
+		task.delay(lifeTime / 2.25, function()
+			requestVisual:FireAllClients("MeteorImpact", {
+				warningClone.Position - Vector3.new(0, 0.5, 0),
+			})
+			warningValid = true
+
+			task.wait(lifeTime / 2.25)
+
 			self._metaplayer:SetPrimary("NONE")
+
+			--RockHandler.Ground(warningClone.Position, 10, Vector3.new(5, 1.5, 3), nil, 10, false, 3)
 
 			task.wait(lifeTime / 2)
 
 			if meteorConnection then
 				meteorConnection:Disconnect()
 				meteorConnection = nil
+			end
+
+			if warningConnection then
+				warningConnection:Disconnect()
+				warningConnection = nil
 			end
 
 			meteorClone:Destroy()
