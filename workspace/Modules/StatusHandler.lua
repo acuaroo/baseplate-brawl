@@ -2,6 +2,8 @@ local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
+--local WalkSpeedHandler = require(ServerStorage["Modules"].WalkSpeedHandler)
+
 local notificationChannel = ReplicatedStorage["Events"].Notification
 local particleHolder = ServerStorage["Assets"].Particles.ParticleHolder
 

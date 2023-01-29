@@ -15,17 +15,13 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 local ServerStorage = game:GetService("ServerStorage")
 local Trove = require(ServerStorage["Modules"].Trove)
+local WalkSpeedHandler = require(ServerStorage["Modules"].WalkSpeedHandler)
 
 local sprint = ReplicatedStorage["Events"].Sprint
 local animRelay = ReplicatedStorage["Events"].AnimRelay
--- local particleHolder = ServerStorage["Assets"].Combat.ParticleHolder
--- local stunParticles = particleHolder.StunParticles
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
-
-local sprintTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
 
 local antiSprint = {
 	"SLOW",
@@ -41,20 +37,6 @@ local DEFAULT_REGEN = 100
 
 local PlayerServer = {}
 
-local function adjustSpeed(player, new)
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
-	if not humanoid then
-		return
-	end
-
-	humanoid.WalkSpeed = new
-end
-
 -- local function emitParticles(player, particles, amount)
 -- 	local head = player.Character:FindFirstChild("Head")
 -- 	particles = particles:Clone()
@@ -64,6 +46,8 @@ end
 -- 		part:Emit(amount)
 -- 	end
 -- end
+
+WalkSpeedHandler:HookPlayers()
 
 Players.PlayerAdded:Connect(function(player)
 	local playerTrace = {}
@@ -85,45 +69,34 @@ Players.PlayerAdded:Connect(function(player)
 		end
 
 		if self.PrimaryState == "SLOW" or self.PrimaryState == "STUNLOCK" then
-			adjustSpeed(player, 7)
+			WalkSpeedHandler:AdjustSpeed(player, -8)
 		elseif self.PrimaryState == "NONE" then
-			adjustSpeed(player, 16)
+			WalkSpeedHandler:ResetSpeed(player)
 		elseif self.PrimaryState == "STUN" then
-			adjustSpeed(player, 5)
+			WalkSpeedHandler:AdjustSpeed(player, -10)
 			--humanoid:UnequipTools()
 			self.MovementState = "WALKING"
 		elseif self.PrimaryState == "NOMOVE" then
-			adjustSpeed(player, 0)
+			WalkSpeedHandler:SetSpeed(player, 0)
 		end
 	end
 
 	function playerTrace:Sprint()
-		local humanoid = player.Character:FindFirstChild("Humanoid")
-		if not humanoid then
-			return
-		end
-
 		self.MovementState = "RUNNING"
 		animRelay:FireClient(player, "Run")
 
 		requestVisual:FireClient(player, "SprintEffect", { ["Toggle"] = nil })
-
-		TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = 22 }):Play()
+		WalkSpeedHandler:TweenToAdjust(player, 9)
 	end
 
 	function playerTrace:StopSprint()
-		local humanoid = player.Character:FindFirstChild("Humanoid")
-		if not humanoid then
-			return
-		end
-
 		requestVisual:FireClient(player, "SprintEffect", {
 			["Toggle"] = "CLEAN",
 		})
 
 		animRelay:FireClient(player, "Run", true)
 		self.MovementState = "WALKING"
-		TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = 16 }):Play()
+		WalkSpeedHandler:TweenToSet(player, 16)
 	end
 
 	function playerTrace:SprintRequest()
@@ -160,8 +133,6 @@ Players.PlayerAdded:Connect(function(player)
 		end)
 	end
 
-	local changeCache = nil
-
 	player.CharacterAdded:Connect(function(character)
 		local humanoid = character:WaitForChild("Humanoid")
 
@@ -169,11 +140,10 @@ Players.PlayerAdded:Connect(function(player)
 		humanoid:SetAttribute("Regeneration", DEFAULT_REGEN)
 
 		humanoid:GetAttributeChangedSignal("Speed"):Connect(function()
-			if humanoid:GetAttribute("Speed") == 0 and changeCache then
-				humanoid.WalkSpeed -= changeCache
+			if humanoid:GetAttribute("Speed") == 0 then
+				WalkSpeedHandler:SetSpeed(player, 16)
 			else
-				changeCache = (humanoid.WalkSpeed * humanoid:GetAttribute("Speed"))
-				humanoid.WalkSpeed += changeCache
+				WalkSpeedHandler:AdjustSpeed(player, (humanoid.WalkSpeed * humanoid:GetAttribute("Speed")))
 			end
 		end)
 	end)

@@ -47,8 +47,8 @@ function ToolClient:Run()
 		["throwSpear"] = function(char, tool)
 			functionality["throwSpear"](char)
 
-			local spearPartA = ReplicatedStorage["Assets"].SpearPartA:Clone()
-			local spearPartB = ReplicatedStorage["Assets"].SpearPartB:Clone()
+			local spearPartA = ReplicatedStorage["Assets"]["Combat"].SpearPartA:Clone()
+			local spearPartB = ReplicatedStorage["Assets"]["Combat"].SpearPartB:Clone()
 
 			local cache = Instance.new("Folder")
 			cache.Name = char.Name .. "SpearVisual"

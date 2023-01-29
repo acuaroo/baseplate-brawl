@@ -1,9 +1,13 @@
+local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
 local combatAssets = ServerStorage["Assets"].Combat
 local critIndicator = combatAssets.CritInd
 local hitIndicator = combatAssets.HitInd
+
+local hitSpark = combatAssets.ParticleHolder.HitSpark
+local hitCenter = combatAssets.ParticleHolder.HitCenter
 
 local DamageHandler = {}
 
@@ -74,6 +78,8 @@ end
 
 function DamageHandler:Indicate(hitLocus, damage, isCrit)
 	local indicator = nil
+	local newSpark = hitSpark:Clone()
+	local newCenter = hitCenter:Clone()
 
 	if isCrit then
 		indicator = critIndicator:Clone()
@@ -91,7 +97,19 @@ function DamageHandler:Indicate(hitLocus, damage, isCrit)
 
 	indicator.StudsOffset = Vector3.new(offsetX, offsetY, offsetZ)
 
+	newSpark.Parent = hitLocus
+	newCenter.Parent = hitLocus
+
+	local part = math.ceil(damage / 10) + 3
+	local particleAmount = math.clamp(part, 3, 10)
+
+	newSpark:Emit(particleAmount)
+	newCenter:Emit(1)
+
 	task.spawn(indicatorTween, indicator)
+
+	Debris:AddItem(newSpark, 4)
+	Debris:AddItem(newCenter, 4)
 end
 
 function DamageHandler:Damage(player, enemyHumanoid, _, config, indicate, hitLocus)
