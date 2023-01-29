@@ -98,8 +98,16 @@ local activate = {
 		task.delay(lifeTime / 2.25, function()
 			requestVisual:FireAllClients("MeteorImpact", {
 				warningClone.Position - Vector3.new(0, 0.5, 0),
+				meteorClone.Position,
+				meteorClone.CFrame,
 			})
+
 			warningValid = true
+
+			meteorClone.Anchored = true
+			meteorClone.Position -= Vector3.new(0, 10, 0)
+			meteorConnection:Disconnect()
+			meteorConnection = nil
 
 			task.wait(lifeTime / 2.25)
 

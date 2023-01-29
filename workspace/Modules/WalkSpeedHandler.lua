@@ -35,6 +35,10 @@ function WalkSpeedHandler:SetSpeed(player, newSpeed)
 
 	playerHooks[player] = newSpeed
 
+	if not player.Character then
+		return
+	end
+
 	local humanoid = player.Character:FindFirstChild("Humanoid")
 
 	if not humanoid then

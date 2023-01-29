@@ -1,8 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local ScreenShake = require(script.Parent["Modules"].ScreenShake)
-
---local RunService = game:GetService("RunService")
+local Rocks = require(script.Parent["Modules"].Rocks)
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
@@ -13,6 +12,8 @@ local camera = workspace.CurrentCamera
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 local particleHolder = ReplicatedStorage["Assets"]["Particles"].ParticleHolder
 local shockwave = ReplicatedStorage["Assets"]["Combat"].Shockwave
+local rock = ReplicatedStorage["Assets"]["Combat"].Rock
+
 local backSprint = particleHolder.BackSprint
 local frontSprint = particleHolder.FrontSprint
 
@@ -23,7 +24,7 @@ local sprintFovIn = TweenService:Create(camera, sprintTweenInfo, { FieldOfView =
 local sprintFovOut = TweenService:Create(camera, sprintTweenInfo, { FieldOfView = 70 })
 
 local visualFunctions = {
-	["SprintEffect"] = function(_)
+	["SprintEffect"] = function(_, _)
 		local humanoid = character:FindFirstChild("Humanoid")
 
 		if not humanoid then
@@ -53,7 +54,7 @@ local visualFunctions = {
 
 		sprintFovIn:Play()
 	end,
-	["ScreenShake"] = function(args)
+	["ScreenShake"] = function(args, _)
 		local function ShakeCamera(shakeCf)
 			camera.CFrame = camera.CFrame * shakeCf
 		end
@@ -72,7 +73,7 @@ local visualFunctions = {
 			args["RotInfluence"]
 		)
 	end,
-	["CharacterTilt"] = function(_)
+	["CharacterTilt"] = function(_, _)
 		local rotFrontBack = 0.1
 		local rotLeftRight = 0.1
 		local rotSpeed = 0.1
@@ -99,7 +100,24 @@ local visualFunctions = {
 			)
 		end)
 	end,
-	["MeteorImpact"] = function(args)
+	["MeteorImpact"] = function(args, self)
+		local humanoidRP = character:FindFirstChild("HumanoidRootPart")
+		local screenShakeCalc = (humanoidRP.Position - args[2]).Magnitude
+		print(screenShakeCalc)
+
+		Rocks:RockRing(args[3] - Vector3.new(0, 11, 0), 3, 12, 30, rock, 30, 2.5)
+
+		if screenShakeCalc <= 20 then
+			self["ScreenShake"]({
+				["Magnitude"] = 50 / screenShakeCalc,
+				["Roughness"] = 100 / screenShakeCalc,
+				["FadeIn"] = 0,
+				["FadeOut"] = 1.5,
+				["PosInfluence"] = Vector3.new(0.25, 0.25, 0.25),
+				["RotInfluence"] = Vector3.new(4, 1, 1),
+			})
+		end
+
 		local newShock = shockwave:Clone()
 		newShock.Parent = workspace.Debris
 		newShock.Position = args[1]
@@ -156,7 +174,7 @@ function VisualClient:Run()
 		end
 
 		if visualFunctions[name] then
-			visualFunctions[name](args)
+			visualFunctions[name](args, visualFunctions)
 		end
 	end)
 end
