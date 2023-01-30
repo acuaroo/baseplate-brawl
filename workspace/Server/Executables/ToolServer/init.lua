@@ -52,10 +52,6 @@ function ToolServer:Run()
 
 		local tool = route.new(player, toolobj, config, MetaPlayers[player])
 		toolPrepTable[player][toolobj.Name] = tool
-
-		if tool._config:GetAttribute("EquipFunction") then
-			tool:RunFunctionality(tool._config:GetAttribute("EquipFunction"))
-		end
 	end)
 
 	animRelay.OnServerEvent:Connect(function(player, toolobj)

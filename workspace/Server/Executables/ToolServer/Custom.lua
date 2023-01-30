@@ -17,7 +17,6 @@ local combatAssets = ServerStorage["Assets"].Combat
 local meteor = combatAssets.Meteor
 local warning = combatAssets.Warning
 local warningSizeTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-local meteorSpinOn = true
 
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 
@@ -51,7 +50,39 @@ local activate = {
 		local humanoidList = {}
 		local warningList = {}
 
-		local meteorConnection = meteorClone.Touched:Connect(function(obj)
+		local warningClone: BasePart = self._trove:Add(warning:Clone())
+		warningClone.Parent = workspace
+		warningClone.Position = Vector3.new(meteorClone.Position.X, BASEY, meteorClone.Position.Z)
+		warningClone.Orientation = Vector3.new(0, 0, 90)
+
+		local warningCloneSize = warningClone.Size
+		warningClone.Size = Vector3.new(0.75, 1, 1)
+
+		local warningValid = false
+
+		local warningTween = TweenService:Create(warningClone, warningSizeTweenInfo, { Size = warningCloneSize })
+		warningTween:Play()
+
+		meteorClone.Anchored = false
+
+		local meteorConnection
+		local warningConnection
+
+		local function applyDamage(obj)
+			local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
+
+			if humanoid and not warningList[humanoid] and warningValid then
+				warningList[humanoid] = true
+
+				StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
+			end
+		end
+
+		warningConnection = warningClone.Touched:Connect(function(obj)
+			applyDamage(obj)
+		end)
+
+		meteorConnection = meteorClone.Touched:Connect(function(obj)
 			local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
 
 			if humanoid and not humanoidList[humanoid] then
@@ -68,52 +99,30 @@ local activate = {
 
 				StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
 			end
-		end)
 
-		local warningClone = self._trove:Add(warning:Clone())
-		warningClone.Parent = workspace
-		warningClone.Position = Vector3.new(meteorClone.Position.X, BASEY, meteorClone.Position.Z)
-		warningClone.Orientation = Vector3.new(0, 0, 90)
+			if obj.Name == "MAINY" or obj.Position.Y <= (BASEY + 5) then
+				warningValid = true
+				meteorClone.Anchored = true
 
-		local warningCloneSize = warningClone.Size
-		warningClone.Size = Vector3.new(0.75, 1, 1)
+				meteorClone.Position = Vector3.new(meteorClone.Position.X, BASEY, meteorClone.Position.Z)
 
-		local warningValid = false
+				requestVisual:FireAllClients("MeteorImpact", {
+					warningClone.Position,
+					meteorClone.Position + Vector3.new(0, 0, 0),
+					meteorClone.CFrame + Vector3.new(0, 0, 0),
+				})
 
-		local warningTween = TweenService:Create(warningClone, warningSizeTweenInfo, { Size = warningCloneSize })
-		warningTween:Play()
+				for _, touch in warningClone:GetTouchingParts() do
+					applyDamage(touch)
+				end
 
-		meteorClone.Anchored = false
-
-		local warningConnection = warningClone.Touched:Connect(function(obj)
-			local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
-
-			if humanoid and not warningList[humanoid] and warningValid then
-				warningList[humanoid] = true
-
-				StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
+				meteorConnection:Disconnect()
+				meteorConnection = nil
 			end
 		end)
 
-		task.delay(lifeTime / 2.25, function()
-			requestVisual:FireAllClients("MeteorImpact", {
-				warningClone.Position - Vector3.new(0, 0.5, 0),
-				meteorClone.Position,
-				meteorClone.CFrame,
-			})
-
-			warningValid = true
-
-			meteorClone.Anchored = true
-			meteorClone.Position -= Vector3.new(0, 10, 0)
-			meteorConnection:Disconnect()
-			meteorConnection = nil
-
-			task.wait(lifeTime / 2.25)
-
+		task.delay(lifeTime / 2, function()
 			self._metaplayer:SetPrimary("NONE")
-
-			--RockHandler.Ground(warningClone.Position, 10, Vector3.new(5, 1.5, 3), nil, 10, false, 3)
 
 			task.wait(lifeTime / 2)
 
@@ -129,55 +138,6 @@ local activate = {
 
 			meteorClone:Destroy()
 			warningClone:Destroy()
-		end)
-	end,
-}
-
-local equipFunctionality = {
-	["meteorOrbit"] = function(self)
-		local tool = self._tool
-		local build = tool.Build.Detail
-
-		local mainMeteor = build.MainMeteor
-
-		local meteor1 = mainMeteor.Meteor1
-		local meteor2 = mainMeteor.Meteor2
-		local meteor3 = mainMeteor.Meteor3
-
-		task.spawn(function()
-			while meteorSpinOn do
-				mainMeteor.Orientation += Vector3.new(0, 0.4, 0)
-				task.wait()
-			end
-		end)
-
-		task.spawn(function()
-			while meteorSpinOn do
-				meteor1.Orientation += Vector3.new(0, 0.2, 3)
-				task.wait()
-			end
-		end)
-
-		task.spawn(function()
-			local directionTick = 0.5
-
-			while meteorSpinOn do
-				if directionTick <= -0.5 then
-					directionTick = 0.5
-				else
-					directionTick -= 0.01
-				end
-
-				meteor2.Orientation += Vector3.new(directionTick / 2, directionTick, directionTick / 3)
-				task.wait()
-			end
-		end)
-
-		task.spawn(function()
-			while meteorSpinOn do
-				meteor3.Orientation += Vector3.new(1, 0.75, 0)
-				task.wait()
-			end
 		end)
 	end,
 }
@@ -258,12 +218,6 @@ function Custom:Ability(playerData)
 
 	if ability[call] then
 		ability[call](self, playerData)
-	end
-end
-
-function Custom:RunFunctionality(name)
-	if equipFunctionality[name] then
-		equipFunctionality[name](self)
 	end
 end
 

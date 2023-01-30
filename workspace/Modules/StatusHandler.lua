@@ -147,7 +147,7 @@ function StatusHandler:ApplyStatus(humanoid, duration, name)
 	if statusEffects[name] then
 		statusEffects[name](humanoid, duration)
 	else
-		warn("[STATUS] Invalid statusEffect name")
+		warn("[STATUS]: Invalid statusEffect name")
 	end
 end
 
@@ -155,7 +155,7 @@ function StatusHandler:ApplySub(humanoid, duration, name, power)
 	if subEffects[name] then
 		subEffects[name](humanoid, duration, name, power)
 	else
-		warn("[STATUS] Invalid subEffect name")
+		warn("[STATUS]: Invalid subEffect name")
 	end
 end
 

@@ -169,15 +169,48 @@ local function sortBackpack()
 	end
 end
 
+local function renderStatus(stat)
+	stat.Arrow.Visible = true
+
+	if stat:GetAttribute("Effect") < 0 then
+		stat.Arrow.Rotation = 180
+		stat.Arrow.ImageColor3 = Color3.fromRGB(255, 129, 131)
+	else
+		stat.Arrow.Rotation = 0
+		stat.Arrow.ImageColor3 = Color3.fromRGB(178, 255, 174)
+	end
+
+	local hover = stat.Hover
+	hover.Title.Text = stat:GetAttribute("Name")
+	hover.Description.Text = tostring(stat:GetAttribute("Effect") * 10)
+		.. "x, "
+		.. tostring(stat:GetAttribute("Duration"))
+		.. "sec"
+
+	stat.MouseEnter:Connect(function()
+		hover.Visible = true
+	end)
+
+	stat.MouseLeave:Connect(function()
+		hover.Visible = false
+	end)
+end
+
 local function statusLoop(statusArgs)
 	for _, status in statusArgs do
 		if activeStatuses[status["Name"]] then
 			local stat = activeStatuses[status["Name"]]
 
+			print(stat:GetAttribute("Effect"))
+
 			stat:SetAttribute("Duration", stat:GetAttribute("Duration") + status["Duration"])
 			stat:SetAttribute("Effect", stat:GetAttribute("Effect") + status["Effect"])
 			stat:SetAttribute("Override", true)
 			stat:SetAttribute("OverrideValue", status["Effect"])
+
+			renderStatus(stat)
+
+			activeStatuses[status["Name"]] = stat
 
 			delayStatus(status)
 			continue
@@ -191,27 +224,8 @@ local function statusLoop(statusArgs)
 		stat:SetAttribute("Duration", status["Duration"])
 		stat:SetAttribute("Name", status["Name"])
 		stat:SetAttribute("Effect", status["Effect"])
-		stat.Arrow.Visible = true
 
-		if status["Effect"] < 0 then
-			stat.Arrow.Rotation = 180
-			stat.Arrow.ImageColor3 = Color3.fromRGB(255, 129, 131)
-		else
-			stat.Arrow.Rotation = 0
-			stat.Arrow.ImageColor3 = Color3.fromRGB(178, 255, 174)
-		end
-
-		local hover = stat.Hover
-		hover.Title.Text = status["Name"]
-		hover.Description.Text = tostring(status["Effect"] * 100) .. "x, " .. tostring(status["Duration"]) .. "sec"
-
-		stat.MouseEnter:Connect(function()
-			hover.Visible = true
-		end)
-
-		stat.MouseLeave:Connect(function()
-			hover.Visible = false
-		end)
+		renderStatus(stat)
 
 		activeStatuses[status["Name"]] = stat
 

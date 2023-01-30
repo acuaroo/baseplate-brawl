@@ -105,9 +105,9 @@ local visualFunctions = {
 		local screenShakeCalc = (humanoidRP.Position - args[2]).Magnitude
 		print(screenShakeCalc)
 
-		Rocks:RockRing(args[3] - Vector3.new(0, 11, 0), 3, 12, 30, rock, 30, 2.5)
+		Rocks:RockRing(args[3], 3, 12, 30, rock, 30, 2)
 
-		if screenShakeCalc <= 20 then
+		if screenShakeCalc <= 30 then
 			self["ScreenShake"]({
 				["Magnitude"] = 50 / screenShakeCalc,
 				["Roughness"] = 100 / screenShakeCalc,

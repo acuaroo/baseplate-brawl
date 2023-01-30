@@ -10,6 +10,10 @@ function WalkSpeedHandler:HookPlayers()
 	Players.PlayerAdded:Connect(function(player)
 		playerHooks[player] = 16
 	end)
+
+	Players.PlayerRemoving:Connect(function(player)
+		playerHooks[player] = nil
+	end)
 end
 
 function WalkSpeedHandler:TweenToSet(player, newSpeed)
@@ -55,6 +59,10 @@ function WalkSpeedHandler:TweenToAdjust(player, adjust)
 
 	playerHooks[player] += adjust
 
+	if not player.Character then
+		return
+	end
+
 	local humanoid = player.Character:FindFirstChild("Humanoid")
 
 	if not humanoid then
@@ -71,6 +79,10 @@ function WalkSpeedHandler:AdjustSpeed(player, adjust)
 
 	playerHooks[player] += adjust
 
+	if not player.Character then
+		return
+	end
+
 	local humanoid = player.Character:FindFirstChild("Humanoid")
 
 	if not humanoid then
@@ -86,6 +98,10 @@ function WalkSpeedHandler:ResetSpeed(player)
 	end
 
 	playerHooks[player] = 16
+
+	if not player.Character then
+		return
+	end
 
 	local humanoid = player.Character:FindFirstChild("Humanoid")
 
