@@ -103,7 +103,6 @@ local visualFunctions = {
 	["MeteorImpact"] = function(args, self)
 		local humanoidRP = character:FindFirstChild("HumanoidRootPart")
 		local screenShakeCalc = (humanoidRP.Position - args[2]).Magnitude
-		print(screenShakeCalc)
 
 		Rocks:RockRing(args[3], 3, 12, 30, rock, 30, 2)
 

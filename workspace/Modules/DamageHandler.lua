@@ -139,7 +139,7 @@ function DamageHandler:Damage(player, enemyHumanoid, _, config, indicate, hitLoc
 		local damageOutputModifier = playerHumanoid:GetAttribute("DamageOutput")
 
 		if damageOutputModifier then
-			damage += (damage * damageIntakeModifier)
+			damage += (damage * damageOutputModifier)
 		end
 	end
 

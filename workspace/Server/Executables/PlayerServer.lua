@@ -53,14 +53,16 @@ Players.PlayerAdded:Connect(function(player)
 	local playerTrace = {}
 	playerTrace.PrimaryState = "NONE"
 	playerTrace.SecondaryState = "NONE"
+	playerTrace.PreviousPrimary = "NONE"
 	playerTrace.MovementState = "WALKING"
 
 	playerTrace._trove = Trove.new()
 	playerTrace._player = player
 
 	function playerTrace:SetPrimary(value)
-		playerTrace.PrimaryState = value
-		playerTrace:_changed()
+		self.PreviousPrimary = self.PrimaryState
+		self.PrimaryState = value
+		self:_changed()
 	end
 
 	function playerTrace:_changed()
@@ -70,8 +72,8 @@ Players.PlayerAdded:Connect(function(player)
 
 		if self.PrimaryState == "SLOW" or self.PrimaryState == "STUNLOCK" then
 			WalkSpeedHandler:AdjustSpeed(player, -8)
-		elseif self.PrimaryState == "NONE" then
-			WalkSpeedHandler:ResetSpeed(player)
+		elseif self.PrimaryState == "NONE" and self.PreviousPrimary == "SLOW" or self.PreviousPrimary == "STUNLOCK" then
+			WalkSpeedHandler:ClampSpeed(player, 8, 0, 16)
 		elseif self.PrimaryState == "STUN" then
 			WalkSpeedHandler:AdjustSpeed(player, -10)
 			--humanoid:UnequipTools()
@@ -143,7 +145,9 @@ Players.PlayerAdded:Connect(function(player)
 			if humanoid:GetAttribute("Speed") == 0 then
 				WalkSpeedHandler:SetSpeed(player, 16)
 			else
-				WalkSpeedHandler:AdjustSpeed(player, (humanoid.WalkSpeed * humanoid:GetAttribute("Speed")))
+				print(tostring(16 + (16 * humanoid:GetAttribute("Speed"))))
+
+				WalkSpeedHandler:PrefixSpeed(player, (16 * humanoid:GetAttribute("Speed")), 16)
 			end
 		end)
 	end)

@@ -10,25 +10,25 @@ local particleHolder = ServerStorage["Assets"].Particles.ParticleHolder
 local effectDescriptions = {
 	["Regeneration"] = {
 		["Name"] = "regeneration",
-		["Effect"] = -0.5,
+		["Effect"] = 0,
 		["Duration"] = 0,
 		["Image"] = "rbxassetid://11684788740",
 	},
 	["Speed"] = {
 		["Name"] = "speed",
-		["Effect"] = -0.3,
+		["Effect"] = 0,
 		["Duration"] = 0,
 		["Image"] = "rbxassetid://11684108736",
 	},
 	["DamageIntake"] = {
 		["Name"] = "damage intake",
-		["Effect"] = 0.1,
+		["Effect"] = 0,
 		["Duration"] = 0,
 		["Image"] = "http://www.roblox.com/asset/?id=11884485716",
 	},
 	["DamageOutput"] = {
 		["Name"] = "damage output",
-		["Effect"] = -0.2,
+		["Effect"] = 0,
 		["Duration"] = 0,
 		["Image"] = "http://www.roblox.com/asset/?id=11884552728",
 	},
@@ -59,8 +59,11 @@ local subEffects = {
 		end
 
 		task.delay(duration, function()
+			attribute = humanoid:GetAttribute(name)
+
 			if attribute then
-				humanoid:SetAttribute(name, attribute)
+				--(humanoid.WalkSpeed * humanoid:GetAttribute("Speed")
+				humanoid:SetAttribute(name, attribute - power)
 			else
 				humanoid:SetAttribute(name, nil)
 			end

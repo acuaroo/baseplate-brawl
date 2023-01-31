@@ -69,6 +69,37 @@ local function tweenNotification(frame, method)
 	frame:TweenPosition(method, Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.5)
 end
 
+local function renderStatus(stat)
+	if not stat then
+		return
+	end
+
+	stat.Arrow.Visible = true
+
+	if stat:GetAttribute("Effect") < 0 then
+		stat.Arrow.Rotation = 180
+		stat.Arrow.ImageColor3 = Color3.fromRGB(255, 129, 131)
+	else
+		stat.Arrow.Rotation = 0
+		stat.Arrow.ImageColor3 = Color3.fromRGB(178, 255, 174)
+	end
+
+	local hover = stat.Hover
+	hover.Title.Text = stat:GetAttribute("Name")
+	hover.Description.Text = tostring(math.floor(stat:GetAttribute("Effect") * 10))
+		.. "x, "
+		.. tostring(math.floor(stat:GetAttribute("Duration")))
+		.. " sec"
+
+	stat.MouseEnter:Connect(function()
+		hover.Visible = true
+	end)
+
+	stat.MouseLeave:Connect(function()
+		hover.Visible = false
+	end)
+end
+
 local function delayStatus(status)
 	task.delay(status["Duration"], function()
 		local stat = activeStatuses[status["Name"]]
@@ -76,25 +107,25 @@ local function delayStatus(status)
 			return
 		end
 
-		if stat:GetAttribute("Override") then
-			local hover = stat:FindFirstChild("Hover")
+		if (stat:GetAttribute("Override") or 0) >= 1 then
+			--local hover = stat:FindFirstChild("Hover")
 
-			if not hover then
-				stat:SetAttribute("OverrideValue", nil)
-				stat:SetAttribute("Override", nil)
-				return
-			end
+			--if hover then
+			stat:SetAttribute("Effect", (stat:GetAttribute("Effect") - status["Effect"]))
+			stat:SetAttribute("Duration", (stat:GetAttribute("Duration") - status["Duration"]))
+			renderStatus(stat)
+			--end
 
-			local overrideVal = stat:GetAttribute("OverrideValue")
-			hover.Description.Text = tostring(overrideVal * 100) .. "x, " .. tostring(status["Duration"]) .. "sec"
+			stat:SetAttribute("Override", stat:GetAttribute("Override") - 1)
 
-			stat:SetAttribute("OverrideValue", nil)
-			stat:SetAttribute("Override", nil)
+			-- if stat:GetAttribute("Override") == 0 then
+			-- 	stat:SetAttribute("OverrideValue", nil)
+			-- end
 			return
 		end
 
 		stat:Destroy()
-		stat = nil
+		activeStatuses[status["Name"]] = nil
 	end)
 end
 
@@ -169,49 +200,18 @@ local function sortBackpack()
 	end
 end
 
-local function renderStatus(stat)
-	stat.Arrow.Visible = true
-
-	if stat:GetAttribute("Effect") < 0 then
-		stat.Arrow.Rotation = 180
-		stat.Arrow.ImageColor3 = Color3.fromRGB(255, 129, 131)
-	else
-		stat.Arrow.Rotation = 0
-		stat.Arrow.ImageColor3 = Color3.fromRGB(178, 255, 174)
-	end
-
-	local hover = stat.Hover
-	hover.Title.Text = stat:GetAttribute("Name")
-	hover.Description.Text = tostring(stat:GetAttribute("Effect") * 10)
-		.. "x, "
-		.. tostring(stat:GetAttribute("Duration"))
-		.. "sec"
-
-	stat.MouseEnter:Connect(function()
-		hover.Visible = true
-	end)
-
-	stat.MouseLeave:Connect(function()
-		hover.Visible = false
-	end)
-end
-
 local function statusLoop(statusArgs)
 	for _, status in statusArgs do
 		if activeStatuses[status["Name"]] then
 			local stat = activeStatuses[status["Name"]]
 
-			print(stat:GetAttribute("Effect"))
-
 			stat:SetAttribute("Duration", stat:GetAttribute("Duration") + status["Duration"])
 			stat:SetAttribute("Effect", stat:GetAttribute("Effect") + status["Effect"])
-			stat:SetAttribute("Override", true)
-			stat:SetAttribute("OverrideValue", status["Effect"])
+
+			local oldOverride = stat:GetAttribute("Override") or 0
+			stat:SetAttribute("Override", oldOverride + 1)
 
 			renderStatus(stat)
-
-			activeStatuses[status["Name"]] = stat
-
 			delayStatus(status)
 			continue
 		end

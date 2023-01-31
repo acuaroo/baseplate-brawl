@@ -100,7 +100,7 @@ local activate = {
 				StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
 			end
 
-			if obj.Name == "MAINY" or obj.Position.Y <= (BASEY + 5) then
+			if obj.Name == "MAINY" or obj.Position.Y <= (BASEY + 5) and not warningValid then
 				warningValid = true
 				meteorClone.Anchored = true
 
@@ -116,8 +116,10 @@ local activate = {
 					applyDamage(touch)
 				end
 
-				meteorConnection:Disconnect()
-				meteorConnection = nil
+				task.delay(0.5, function()
+					meteorConnection:Disconnect()
+					meteorConnection = nil
+				end)
 			end
 		end)
 

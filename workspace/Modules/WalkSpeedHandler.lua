@@ -92,6 +92,48 @@ function WalkSpeedHandler:AdjustSpeed(player, adjust)
 	humanoid.WalkSpeed = playerHooks[player]
 end
 
+function WalkSpeedHandler:PrefixSpeed(player, adjust, prefix)
+	if not playerHooks[player] then
+		return
+	end
+
+	playerHooks[player] = (prefix + adjust)
+
+	if not player.Character then
+		return
+	end
+
+	local humanoid = player.Character:FindFirstChild("Humanoid")
+
+	if not humanoid then
+		return
+	end
+
+	humanoid.WalkSpeed = playerHooks[player]
+	print(playerHooks[player])
+end
+
+function WalkSpeedHandler:ClampSpeed(player, adjust, clampMin, clampMax)
+	if not playerHooks[player] then
+		return
+	end
+
+	playerHooks[player] += adjust
+	playerHooks[player] = math.clamp(playerHooks[player], clampMin, clampMax)
+
+	if not player.Character then
+		return
+	end
+
+	local humanoid = player.Character:FindFirstChild("Humanoid")
+
+	if not humanoid then
+		return
+	end
+
+	humanoid.WalkSpeed = playerHooks[player]
+end
+
 function WalkSpeedHandler:ResetSpeed(player)
 	if not playerHooks[player] then
 		return

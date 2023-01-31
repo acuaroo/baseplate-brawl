@@ -133,7 +133,7 @@ function ToolServer:Run()
 			return
 		end
 
-		if equip then
+		if equip and toolobj then
 			if toolobj.Parent ~= player.Backpack then
 				return -- TODO: punish :)
 			end
