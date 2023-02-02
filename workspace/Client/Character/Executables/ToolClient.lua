@@ -132,7 +132,7 @@ function ToolClient:Run()
 			end
 		end
 
-		ContextActionService:BindAction("OffhandInput", handleOffhandInput, true, Enum.UserInputType.MouseButton2)
+		ContextActionService:BindAction("OffhandInput", handleOffhandInput, true, Enum.KeyCode.F)
 		ContextActionService:SetImage("OffhandInput", "http://www.roblox.com/asset/?id=11554338960")
 
 		-- offhandCon = UserInputService.InputBegan:Connect(function(input, gameProcessed)
