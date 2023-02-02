@@ -73,7 +73,7 @@ Players.PlayerAdded:Connect(function(player)
 		if self.PrimaryState == "SLOW" or self.PrimaryState == "STUNLOCK" then
 			WalkSpeedHandler:AdjustSpeed(player, -8)
 		elseif self.PrimaryState == "NONE" and self.PreviousPrimary == "SLOW" or self.PreviousPrimary == "STUNLOCK" then
-			WalkSpeedHandler:ClampSpeed(player, 8, 0, 16)
+			WalkSpeedHandler:SetSpeed(player, WalkSpeedHandler:GetCachedSpeed(player))
 		elseif self.PrimaryState == "STUN" then
 			WalkSpeedHandler:AdjustSpeed(player, -10)
 			--humanoid:UnequipTools()
@@ -98,7 +98,7 @@ Players.PlayerAdded:Connect(function(player)
 
 		animRelay:FireClient(player, "Run", true)
 		self.MovementState = "WALKING"
-		WalkSpeedHandler:TweenToSet(player, 16)
+		WalkSpeedHandler:SetSpeed(player, 16)
 	end
 
 	function playerTrace:SprintRequest()

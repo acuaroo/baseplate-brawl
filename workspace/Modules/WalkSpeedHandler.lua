@@ -4,154 +4,122 @@ local TweenService = game:GetService("TweenService")
 local sprintTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
 
 local playerHooks = {}
+local playerSpeedCache = {}
 local WalkSpeedHandler = {}
 
-function WalkSpeedHandler:HookPlayers()
-	Players.PlayerAdded:Connect(function(player)
-		playerHooks[player] = 16
-	end)
-
-	Players.PlayerRemoving:Connect(function(player)
-		playerHooks[player] = nil
-	end)
-end
-
-function WalkSpeedHandler:TweenToSet(player, newSpeed)
+local function checkValid(player)
 	if not playerHooks[player] then
-		return
+		return false
 	end
-
-	playerHooks[player] = newSpeed
 
 	local humanoid = player.Character:FindFirstChild("Humanoid")
 
 	if not humanoid then
+		return false
+	end
+
+	return humanoid
+end
+
+function WalkSpeedHandler:HookPlayers()
+	Players.PlayerAdded:Connect(function(player)
+		playerHooks[player] = 16
+		playerSpeedCache[player] = 16
+	end)
+
+	Players.PlayerRemoving:Connect(function(player)
+		playerHooks[player] = nil
+		playerSpeedCache[player] = nil
+	end)
+end
+
+function WalkSpeedHandler:TweenToSet(player, newSpeed)
+	local humanoid = checkValid(player)
+	if not humanoid then
 		return
 	end
+
+	playerSpeedCache[player] = playerHooks[player]
+	playerHooks[player] = newSpeed
 
 	TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = newSpeed }):Play()
 end
 
 function WalkSpeedHandler:SetSpeed(player, newSpeed)
-	if not playerHooks[player] then
-		return
-	end
-
-	playerHooks[player] = newSpeed
-
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
+	local humanoid = checkValid(player)
 	if not humanoid then
 		return
 	end
+
+	playerSpeedCache[player] = playerHooks[player]
+	playerHooks[player] = newSpeed
 
 	humanoid.WalkSpeed = playerHooks[player]
 end
 
 function WalkSpeedHandler:TweenToAdjust(player, adjust)
-	if not playerHooks[player] then
+	local humanoid = checkValid(player)
+	if not humanoid then
 		return
 	end
 
 	playerHooks[player] += adjust
-
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
-	if not humanoid then
-		return
-	end
 
 	TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = playerHooks[player] }):Play()
 end
 
 function WalkSpeedHandler:AdjustSpeed(player, adjust)
-	if not playerHooks[player] then
-		return
-	end
-
-	playerHooks[player] += adjust
-
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
+	local humanoid = checkValid(player)
 	if not humanoid then
 		return
 	end
+
+	playerSpeedCache[player] = playerHooks[player]
+	playerHooks[player] += adjust
 
 	humanoid.WalkSpeed = playerHooks[player]
 end
 
 function WalkSpeedHandler:PrefixSpeed(player, adjust, prefix)
-	if not playerHooks[player] then
+	local humanoid = checkValid(player)
+	if not humanoid then
 		return
 	end
 
 	playerHooks[player] = (prefix + adjust)
 
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
-	if not humanoid then
-		return
-	end
-
 	humanoid.WalkSpeed = playerHooks[player]
-	print(playerHooks[player])
 end
 
 function WalkSpeedHandler:ClampSpeed(player, adjust, clampMin, clampMax)
-	if not playerHooks[player] then
-		return
-	end
+	print("clampseed")
 
-	playerHooks[player] += adjust
-	playerHooks[player] = math.clamp(playerHooks[player], clampMin, clampMax)
-
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
+	local humanoid = checkValid(player)
 	if not humanoid then
 		return
 	end
+
+	playerSpeedCache[player] = playerHooks[player]
+	playerHooks[player] += adjust
+	playerHooks[player] = math.clamp(playerHooks[player], clampMin, clampMax)
 
 	humanoid.WalkSpeed = playerHooks[player]
 end
 
 function WalkSpeedHandler:ResetSpeed(player)
-	if not playerHooks[player] then
-		return
-	end
-
-	playerHooks[player] = 16
-
-	if not player.Character then
-		return
-	end
-
-	local humanoid = player.Character:FindFirstChild("Humanoid")
-
+	local humanoid = checkValid(player)
 	if not humanoid then
 		return
 	end
 
+	playerSpeedCache[player] = playerHooks[player]
+	playerHooks[player] = 16
+
 	humanoid.WalkSpeed = playerHooks[player]
+end
+
+function WalkSpeedHandler:GetCachedSpeed(player)
+	return playerSpeedCache[player]
 end
 
 return WalkSpeedHandler

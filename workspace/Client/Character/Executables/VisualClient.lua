@@ -130,7 +130,6 @@ local visualFunctions = {
 		newShockFade.Completed:Wait()
 
 		newShock:Destroy()
-		-- a
 	end,
 }
 
