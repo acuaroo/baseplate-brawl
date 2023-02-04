@@ -1,4 +1,6 @@
 for _, exe in pairs(script.Parent.Executables:GetChildren()) do
-	require(exe):Run()
-	print("[ALLOY]: " .. exe.Name .. " was loaded")
+	if exe:IsA("ModuleScript") then
+		require(exe):Run()
+		print("[ALLOY]: " .. exe.Name .. " was loaded")
+	end
 end

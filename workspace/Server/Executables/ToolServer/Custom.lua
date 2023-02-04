@@ -5,7 +5,7 @@
 local ServerStorage = game:GetService("ServerStorage")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
-
+local Debris = game:GetService("Debris")
 local Tool = require(script.Parent.Tool)
 local Trove = require(ServerStorage["Modules"].Trove)
 --local ClientCast = require(ServerStorage["Modules"].ClientCast)
@@ -22,7 +22,7 @@ local requestVisual = ReplicatedStorage["Events"].RequestVisual
 
 local BASEY = workspace:WaitForChild("baseplate").BASEY.Position.Y
 
---local animRelay = ReplicatedStorage["Events"].AnimRelay
+local animRelay = ReplicatedStorage["Events"].AnimRelay
 
 local activate = {
 	["summonMeteor"] = function(self, playerData)
@@ -147,7 +147,98 @@ local activate = {
 --local offhand = {}
 
 local ability = {
-	["meteorShower"] = function() end,
+	["meteorShower"] = function(self, _)
+		self.AbilityActive = true
+		self:AbilityDebounce("AbilityDebounce")
+		self._metaplayer:SetPrimary("NOMOVE")
+
+		animRelay:FireClient(self.Owner, "MeteorShower")
+
+		local character = self.Owner.Character
+		local humanoidRP = character:FindFirstChild("HumanoidRootPart")
+
+		if not humanoidRP then
+			return
+		end
+
+		local amountOfRocks = 20
+		local meteorConnections = {}
+
+		local function rockSpawn()
+			for index = 1, 35 do
+				local angle = math.random(1, amountOfRocks) * 2 * math.pi / amountOfRocks
+				local positionOnCircle = Vector3.new(math.sin(angle), 1.25, math.cos(angle)) * 20
+
+				local meteorClone = self._trove:Add(meteor:Clone())
+				local sizeMult = (math.random(30, 100) / 100)
+
+				meteorClone.Size *= sizeMult
+				local humanoidList = {}
+
+				if sizeMult >= 0.98 then
+					meteorConnections[index] = meteorClone.Touched:Connect(function(obj)
+						local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
+
+						if humanoid and not humanoidList[humanoid] then
+							humanoidList[humanoid] = true
+
+							DamageHandler:Damage(
+								self.Owner,
+								humanoid,
+								self._tool,
+								self._config,
+								true,
+								humanoid.Parent:FindFirstChild("HumanoidRootPart")
+							)
+
+							StatusHandler:ApplyStatus(humanoid, 8, "BrokenBone")
+						end
+
+						if obj.Name == "MAINY" or obj.Position.Y <= (BASEY + 5) then
+							meteorClone.Anchored = true
+
+							meteorClone.Position = Vector3.new(meteorClone.Position.X, BASEY, meteorClone.Position.Z)
+
+							task.delay(0.5, function()
+								if meteorConnections[index] then
+									meteorConnections[index]:Disconnect()
+									meteorConnections[index] = nil
+								end
+							end)
+
+							requestVisual:FireAllClients("MeteorImpact", {
+								meteorClone.Position,
+								meteorClone.Position + Vector3.new(0, 0, 0),
+								meteorClone.CFrame + Vector3.new(0, 0, 0),
+							})
+						end
+					end)
+				end
+
+				meteorClone.Parent = workspace
+				meteorClone.CFrame = humanoidRP.CFrame + positionOnCircle
+				meteorClone.Anchored = false
+				meteorClone.CanCollide = true
+
+				Debris:AddItem(meteorClone, 1)
+
+				task.wait(0.075)
+
+				self._metaplayer:SetPrimary("NONE")
+			end
+		end
+
+		task.spawn(rockSpawn)
+		task.spawn(rockSpawn)
+
+		task.wait(2.9)
+		self.AbilityActive = false
+		requestVisual:FireAllClients("MeteorImpact", {
+			humanoidRP.Position - Vector3.new(0, 3, 0),
+			humanoidRP.Position + Vector3.new(0, 3, 0),
+			humanoidRP.CFrame + Vector3.new(0, 0, 0),
+		})
+	end,
 }
 
 local Custom = {}
@@ -163,6 +254,7 @@ function Custom.new(player, tool, config, metaplayer)
 	self.Debouncing = false
 	self.OffDebouncing = false
 	self.AbilityDebouncing = false
+	self.AbilityActive = false
 
 	self._config = config
 	self._tool = tool

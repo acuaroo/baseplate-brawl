@@ -94,7 +94,7 @@ function ToolServer:Run()
 		if not tool then
 			return false
 		end
-		if tool.Debouncing then
+		if tool.Debouncing or tool.AbilityActive then
 			return false
 		end
 		if toolParse(MetaPlayers[player], { "STUNLOCK", "STUN", "GRAB", "FUNCTIONAL", "NOMOVE" }) then
@@ -112,7 +112,7 @@ function ToolServer:Run()
 		if not tool then
 			return false
 		end
-		if tool.OffDebouncing then
+		if tool.OffDebouncing or tool.AbilityActive then
 			return false
 		end
 		if toolParse(MetaPlayers[player], { "STUN", "RUNNING", "FUNCTIONAL", "GRAB", "NOMOVE" }) then

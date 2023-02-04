@@ -12,6 +12,7 @@ local mouse = player:GetMouse()
 local toolPrep = ReplicatedStorage["Events"].ToolPrep
 local toolActivated = ReplicatedStorage["Events"].ToolActivated
 local toolOffhand = ReplicatedStorage["Events"].ToolOffhand
+local toolAbility = ReplicatedStorage["Events"].ToolAbility
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local animations = ReplicatedStorage["Animations"]
 
@@ -132,42 +133,19 @@ function ToolClient:Run()
 			end
 		end
 
+		local function handleAbilityInput(_, actionState)
+			if actionState == Enum.UserInputState.Begin then
+				if config:GetAttribute("Ability") == true then
+					toolAbility:InvokeServer(tool, config, false)
+				end
+			end
+		end
+
 		ContextActionService:BindAction("OffhandInput", handleOffhandInput, true, Enum.KeyCode.F)
 		ContextActionService:SetImage("OffhandInput", "http://www.roblox.com/asset/?id=11554338960")
 
-		-- offhandCon = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		-- 	if gameProcessed then
-		-- 		return
-		-- 	end
-
-		-- 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		-- 		local valid = toolOffhand:InvokeServer(tool, config, true)
-
-		-- 		if valid then
-		-- 			local subCall = config:GetAttribute("SubClass")
-
-		-- 			if subCall and init[subCall] then
-		-- 				init[subCall](character, tool)
-		-- 			end
-		-- 		end
-		-- 	end
-		-- end)
-
-		-- offhandDiscon = UserInputService.InputEnded:Connect(function(input, gameProcessed)
-		-- 	if gameProcessed then
-		-- 		return
-		-- 	end
-
-		-- 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		-- 		local subCall = config:GetAttribute("SubClass")
-
-		-- 		if subCall and functionality[subCall] then
-		-- 			functionality[subCall](character, tool)
-		-- 		end
-
-		-- 		toolOffhand:InvokeServer(tool, config, false)
-		-- 	end
-		-- end)
+		ContextActionService:BindAction("AbilityInput", handleAbilityInput, true, Enum.KeyCode.Q)
+		ContextActionService:SetImage("AbilityInput", "http://www.roblox.com/asset/?id=11884485716")
 
 		tool.Unequipped:Connect(function()
 			animRelay:FireServer(tool)
