@@ -15,6 +15,9 @@ local StatusHandler = require(ServerStorage["Modules"].StatusHandler)
 
 local combatAssets = ServerStorage["Assets"].Combat
 local meteor = combatAssets.Meteor
+local meteorVar1 = combatAssets.MeteorVar1
+local meteorVar2 = combatAssets.MeteorVar2
+
 local warning = combatAssets.Warning
 local warningSizeTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 

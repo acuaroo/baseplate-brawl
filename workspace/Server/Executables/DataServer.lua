@@ -30,6 +30,7 @@ local defaultTemplate = {
 		["Sword"] = { name = "Sword", equipped = true },
 		["Meteor Staff"] = { name = "Meteor Staff", equipped = true },
 		["Cursed Spear"] = { name = "Cursed Spear", equipped = true },
+		["Starter Sword"] = { name = "Starter Sword", equipped = true },
 	},
 	playerSettings = {
 		["Music"] = true,
