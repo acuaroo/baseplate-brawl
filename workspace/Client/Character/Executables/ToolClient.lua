@@ -166,7 +166,7 @@ local function startDebounce(name, cooldown)
 		cooldownUi.Size = UDim2.new(1, 0, 0, 0)
 		cooldownUi.Visible = true
 
-		local cooldownTweenInfo = TweenInfo.new(cooldown, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+		local cooldownTweenInfo = TweenInfo.new(tonumber(cooldown), Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 
 		local cooldownUiTween = TweenService:Create(cooldownUi, cooldownTweenInfo, { Size = UDim2.new(1, 0, 1.006, 0) })
 		cooldownUiTween:Play()
@@ -223,6 +223,7 @@ local function toolf(tool, config)
 
 				if valid then
 					startActivate("Ability")
+					print("hi")
 					startDebounce("Ability", config:GetAttribute("AbilityDebounce") - 0.75)
 
 					task.delay(0.3, function()
