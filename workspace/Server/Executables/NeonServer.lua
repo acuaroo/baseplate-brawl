@@ -11,7 +11,7 @@ local commands = script.Parent.Commands
 local NeonServer = {}
 
 local function parse(commandText)
-	local splitCommand = string.lower(string.split(commandText, " "))
+	local splitCommand = string.split(string.lower(commandText), " ")
 	local specialArgs = {
 		["Name"] = splitCommand[1],
 	}
@@ -44,7 +44,7 @@ function NeonServer:Run()
 			return
 		end
 
-		require(commands[extraArgs["Name"]]):Run(args)
+		require(commands[extraArgs["Name"]]):Run(args, player)
 	end)
 end
 

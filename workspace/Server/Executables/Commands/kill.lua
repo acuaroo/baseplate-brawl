@@ -14,7 +14,7 @@ local function killRun(player)
 	humanoid.Health = 0
 end
 
-function kill:Run(args)
+function kill:Run(args, _)
 	if args[2] == "all" then
 		for _, player in pairs(game.Players:GetPlayers()) do
 			killRun(player)

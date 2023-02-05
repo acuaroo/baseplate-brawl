@@ -21,9 +21,11 @@ local function handleSprintInput(_, actionState)
 end
 
 function RunClient:Run()
-	ContextActionService:BindAction("StartSprint", handleSprintInput, true, sprintKey)
-	ContextActionService:SetImage("StartSprint", "rbxassetid://11684108736")
-	ContextActionService:SetPosition("StartSprint", UDim2.new(0.45, 0, 0, 0))
+	ContextActionService:BindAction("StartSprint", handleSprintInput, false, sprintKey)
+	-- ContextActionService:SetImage("StartSprint", "rbxassetid://11684108736")
+	-- ContextActionService:SetPosition("StartSprint", UDim2.new(0.45, 0, 0, 0))
+
+	task.wait(1)
 end
 
 return RunClient

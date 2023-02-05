@@ -16,6 +16,7 @@ local toolOffhand = ReplicatedStorage["Events"].ToolOffhand
 local toolAbility = ReplicatedStorage["Events"].ToolAbility
 local toolEquip = ReplicatedStorage["Events"].ToolEquip
 local notificationChannel = ReplicatedStorage["Events"].Notification
+local debug = ReplicatedStorage["Events"].Debug
 
 local toolPrepTable = {}
 local ToolServer = {}
@@ -52,6 +53,10 @@ function ToolServer:Run()
 
 		local tool = route.new(player, toolobj, config, MetaPlayers[player])
 		toolPrepTable[player][toolobj.Name] = tool
+
+		if MetaPlayers[player].Debug then
+			debug:FireClient(player, "LatestToolPrep", toolobj.Name)
+		end
 	end)
 
 	animRelay.OnServerEvent:Connect(function(player, toolobj)
@@ -85,6 +90,10 @@ function ToolServer:Run()
 
 		tool:Ability(playerData)
 
+		if MetaPlayers[player].Debug then
+			debug:FireClient(player, "LatestToolAbility", toolobj.Name)
+		end
+
 		return true
 	end
 
@@ -103,6 +112,10 @@ function ToolServer:Run()
 
 		tool:Activate(args)
 
+		if MetaPlayers[player].Debug then
+			debug:FireClient(player, "LatestToolActivate", toolobj.Name)
+		end
+
 		return true
 	end
 
@@ -120,6 +133,10 @@ function ToolServer:Run()
 		end
 
 		tool:Offhand(enable)
+
+		if MetaPlayers[player].Debug then
+			debug:FireClient(player, "LatestToolOffhand", toolobj.Name)
+		end
 
 		return true
 	end

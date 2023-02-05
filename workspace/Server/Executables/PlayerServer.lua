@@ -22,6 +22,7 @@ local WalkSpeedHandler = require(ServerStorage["Modules"].WalkSpeedHandler)
 local sprint = ReplicatedStorage["Events"].Sprint
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
+local debug = ReplicatedStorage["Events"].Debug
 
 local antiSprint = {
 	"SLOW",
@@ -63,6 +64,10 @@ Players.PlayerAdded:Connect(function(player)
 		self.PreviousPrimary = self.PrimaryState
 		self.PrimaryState = value
 		self:_changed()
+
+		if self.Debug then
+			debug:FireClient(player, "PrimaryState", value)
+		end
 	end
 
 	function playerTrace:_changed()
@@ -72,7 +77,14 @@ Players.PlayerAdded:Connect(function(player)
 
 		if self.PrimaryState == "SLOW" or self.PrimaryState == "STUNLOCK" then
 			WalkSpeedHandler:AdjustSpeed(player, -8)
-		elseif self.PrimaryState == "NONE" and self.PreviousPrimary == "SLOW" or self.PreviousPrimary == "STUNLOCK" then
+		elseif
+			self.PrimaryState == "NONE"
+			and (
+				self.PreviousPrimary == "SLOW"
+				or self.PreviousPrimary == "STUNLOCK"
+				or self.PreviousPrimary == "NOMOVE"
+			)
+		then
 			WalkSpeedHandler:SetSpeed(player, WalkSpeedHandler:GetCachedSpeed(player))
 		elseif self.PrimaryState == "STUN" then
 			WalkSpeedHandler:AdjustSpeed(player, -10)
@@ -87,6 +99,10 @@ Players.PlayerAdded:Connect(function(player)
 		self.MovementState = "RUNNING"
 		animRelay:FireClient(player, "Run")
 
+		if self.Debug then
+			debug:FireClient(player, "MovementState", "RUNNING")
+		end
+
 		requestVisual:FireClient(player, "SprintEffect", { ["Toggle"] = nil })
 		WalkSpeedHandler:TweenToAdjust(player, 9)
 	end
@@ -98,6 +114,11 @@ Players.PlayerAdded:Connect(function(player)
 
 		animRelay:FireClient(player, "Run", true)
 		self.MovementState = "WALKING"
+
+		if self.Debug then
+			debug:FireClient(player, "MovementState", "WALKING")
+		end
+
 		WalkSpeedHandler:SetSpeed(player, 16)
 	end
 
@@ -145,11 +166,15 @@ Players.PlayerAdded:Connect(function(player)
 			if humanoid:GetAttribute("Speed") == 0 then
 				WalkSpeedHandler:SetSpeed(player, 16)
 			else
-				print(tostring(16 + (16 * humanoid:GetAttribute("Speed"))))
-
 				WalkSpeedHandler:PrefixSpeed(player, (16 * humanoid:GetAttribute("Speed")), 16)
 			end
 		end)
+	end)
+
+	debug.OnServerEvent:Connect(function(playerobj, on)
+		if playerobj == player then
+			playerTrace.Debug = on
+		end
 	end)
 
 	PlayerServer[player] = playerTrace

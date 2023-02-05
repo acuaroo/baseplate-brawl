@@ -79,7 +79,7 @@ local functionality = {
 			local animationHeader = config:GetAttribute("AnimationHeader")
 			local cleaned = false
 
-			self:OffDebounce("OffDebounce")
+			self:OffDebounce("OffDebounceTime")
 
 			--animRelay:FireClient(self.Owner, animationHeader.."Idle", true)
 			animRelay:FireClient(self.Owner, animationHeader .. "Throw", nil, nil, animationHeader .. "Idle")
