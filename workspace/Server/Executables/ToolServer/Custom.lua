@@ -169,19 +169,22 @@ local ability = {
 		local function rockSpawn(rockAmount, waitTime)
 			for index = 1, rockAmount do
 				local angle = math.random(1, rockAmount) * 2 * math.pi / rockAmount
-				local positionOnCircle = Vector3.new(math.sin(angle), 1.25, math.cos(angle)) * 20
+				local positionOnCircle = Vector3.new(math.sin(angle), 1.5, math.cos(angle)) * 20
 
-				local var = math.random(1, 3)
+				local var = math.random(1, 6)
 				local meteorClone
 
-				if var == 1 then
+				if var <= 3 then
 					meteorClone = self._trove:Add(meteor:Clone())
 				end
-				if var == 2 then
+				if var == 4 then
 					meteorClone = self._trove:Add(meteorVar1:Clone())
 				end
-				if var == 3 then
+				if var == 5 then
 					meteorClone = self._trove:Add(meteorVar2:Clone())
+				end
+				if var == 6 then
+					continue
 				end
 
 				local sizeMult = (math.random(60, 100) / 100)
@@ -189,7 +192,7 @@ local ability = {
 				meteorClone.Size *= sizeMult
 				local humanoidList = {}
 
-				if sizeMult >= 0.9 and var == 1 then
+				if sizeMult >= 0.9 and var <= 3 then
 					meteorConnections[index] = meteorClone.Touched:Connect(function(obj)
 						local humanoid = obj.Parent:FindFirstChildOfClass("Humanoid")
 
@@ -240,15 +243,15 @@ local ability = {
 			end
 		end
 
-		task.spawn(rockSpawn, math.random(30, 40), 0.025)
-		task.spawn(rockSpawn, math.random(10, 20), 0.075)
+		task.spawn(rockSpawn, math.random(20, 40), 0.05)
+		task.spawn(rockSpawn, math.random(20, 30), 0.09)
 
 		task.wait(2.9)
 
 		self.AbilityActive = false
 
 		requestVisual:FireAllClients("MeteorImpact", {
-			humanoidRP.Position - Vector3.new(0, 3, 0),
+			humanoidRP.Position,
 			humanoidRP.Position + Vector3.new(0, 3, 0),
 			humanoidRP.CFrame + Vector3.new(0, 0, 0),
 		})

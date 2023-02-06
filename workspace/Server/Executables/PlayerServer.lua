@@ -20,6 +20,7 @@ local Trove = require(ServerStorage["Modules"].Trove)
 local WalkSpeedHandler = require(ServerStorage["Modules"].WalkSpeedHandler)
 
 local sprint = ReplicatedStorage["Events"].Sprint
+local roll = ReplicatedStorage["Events"].Roll
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 local debug = ReplicatedStorage["Events"].Debug
@@ -107,6 +108,54 @@ Players.PlayerAdded:Connect(function(player)
 		WalkSpeedHandler:TweenToAdjust(player, 9)
 	end
 
+	function playerTrace:Roll()
+		self.MovementState = "ROLLING"
+
+		if self.Debug then
+			debug:FireClient(player, "MovementState", "ROLLING")
+		end
+
+		local humanoidRP = player.Character.HumanoidRootPart
+		local humanoid = player.Character.Humanoid
+		local humanoidState = humanoid:GetState()
+
+		local rollAttachment: Attachment = Instance.new("Attachment")
+		rollAttachment.Parent = humanoidRP
+
+		local newVector: VectorForce = self._trove:Add(Instance.new("VectorForce"))
+		newVector.Parent = humanoidRP
+		newVector.Attachment0 = rollAttachment
+
+		--newVector.Attachment1 = rollAttachment
+		local mult = 9
+
+		if humanoidState == Enum.HumanoidStateType.Freefall then
+			mult = 3.5
+		end
+
+		if humanoidState == Enum.HumanoidStateType.Flying then
+			mult = 3.5
+		end
+
+		if humanoidState == Enum.HumanoidStateType.Jumping then
+			mult = 3.5
+		end
+
+		newVector.Force = Vector3.new(0, 0, -1) * (1000 * mult)
+		self.RollDebounce = true
+
+		animRelay:FireClient(player, "Roll")
+
+		task.delay(0.4, function()
+			newVector:Destroy()
+			self.MovementState = "WALKING"
+
+			task.wait(2.6)
+
+			self.RollDebounce = false
+		end)
+	end
+
 	function playerTrace:StopSprint()
 		requestVisual:FireClient(player, "SprintEffect", {
 			["Toggle"] = "CLEAN",
@@ -137,6 +186,31 @@ Players.PlayerAdded:Connect(function(player)
 			self.MovementState = "RUNNING"
 			self:Sprint()
 		end
+	end
+
+	function playerTrace:RollRequest()
+		if table.find(antiSprint, self.PrimaryState) or self.MovementState == "ROLLING" then
+			return false
+		end
+
+		if self.RollDebounce then
+			return false
+		end
+
+		local humanoid = player.Character:FindFirstChild("Humanoid")
+
+		if not humanoid then
+			return false
+		end
+
+		if humanoid.MoveDirection.Magnitude > 0.1 then
+			self.MovementState = "ROLLING"
+			self:Roll()
+
+			return true
+		end
+
+		return false
 	end
 
 	function playerTrace:ImposePrimary(status, enemy, duration)
@@ -198,6 +272,18 @@ function PlayerServer:Run()
 			metaplayer:StopSprint()
 		end
 	end)
+
+	roll.OnServerInvoke = function(player)
+		local metaplayer = PlayerServer[player]
+
+		if not metaplayer then
+			return false
+		end
+
+		local validRequest = metaplayer:RollRequest()
+
+		return validRequest
+	end
 end
 
 return PlayerServer

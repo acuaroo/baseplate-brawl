@@ -91,7 +91,7 @@ local subEffects = {
 
 local statusEffects = {
 	["Curse"] = function(humanoid, duration)
-		subEffects["normalEffect"](humanoid, duration, "DamageIntake", 0.1)
+		subEffects["normalEffect"](humanoid, duration, "DamageIntake", 0.25)
 		subEffects["normalEffect"](humanoid, duration, "DamageOutput", -0.2)
 		subEffects["normalEffect"](humanoid, duration, "Regeneration", -0.5)
 		subEffects["normalEffect"](humanoid, duration, "Speed", -0.1)

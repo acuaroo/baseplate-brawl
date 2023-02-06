@@ -24,6 +24,7 @@ local toolOffhand = ReplicatedStorage["Events"].ToolOffhand
 local toolAbility = ReplicatedStorage["Events"].ToolAbility
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local animations = ReplicatedStorage["Animations"]
+local rollDebounce = ReplicatedStorage["Events"].RollDebounce
 
 local activatedCon
 local spearCon
@@ -125,7 +126,10 @@ local function startActivate(name)
 		return
 	end
 
-	ui.BackgroundColor3 = Color3.fromRGB(255, 213, 85)
+	local uiColorTweenInfo = TweenInfo.new(0.75, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+	local uiColorTween = TweenService:Create(ui, uiColorTweenInfo, { BackgroundColor3 = Color3.fromRGB(255, 213, 85) })
+	uiColorTween:Play()
+
 	ui.BackgroundTransparency = 0.7
 end
 
@@ -223,7 +227,6 @@ local function toolf(tool, config)
 
 				if valid then
 					startActivate("Ability")
-					print("hi")
 					startDebounce("Ability", config:GetAttribute("AbilityDebounce") - 0.75)
 
 					task.delay(0.3, function()
@@ -292,6 +295,15 @@ local function toolf(tool, config)
 end
 
 function ToolClient:Run()
+	rollDebounce.Event:Connect(function()
+		startActivate("Roll")
+		startDebounce("Roll", 3)
+
+		task.delay(3, function()
+			stopActivate("Roll")
+		end)
+	end)
+
 	local playerDevice = Spool:GetPlayerDevice()
 
 	if playerDevice == "Mobile" then
