@@ -33,6 +33,8 @@ function Spool:GetPlayerDevice()
 	if recentInput == gyro or recentInput == accel then
 		mobileChance = mobileChance + 1
 	end
+	print("comp chance: " .. computerChance)
+	print("mobile chance: " .. mobileChance)
 
 	if computerChance > mobileChance then
 		return "Computer"
@@ -40,7 +42,7 @@ function Spool:GetPlayerDevice()
 		return "Mobile"
 	end
 
-	return "Computer"
+	return "Mobile"
 end
 
 return Spool

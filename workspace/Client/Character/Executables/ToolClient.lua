@@ -29,6 +29,8 @@ local rollDebounce = ReplicatedStorage["Events"].RollDebounce
 local activatedCon
 local spearCon
 
+local touchConnections = {}
+local hooks = {}
 local ToolClient = {}
 
 local function cleanupConnections()
@@ -82,7 +84,26 @@ local init = {
 	end,
 }
 
-local function setMobileUI() end
+local function hookAction(button)
+	touchConnections[button.Name .. "B"] = button.MouseButton1Down:Connect(function()
+		print(button.Name)
+
+		hooks[button.Name](nil, Enum.UserInputState.Begin)
+	end)
+
+	touchConnections[button.Name .. "E"] = button.MouseButton1Up:Connect(function()
+		hooks[button.Name](nil, Enum.UserInputState.End)
+	end)
+end
+
+local function setMobileUI()
+	for _, ui in computerFolder:GetChildren() do
+		ui.Visible = false
+	end
+
+	mobileFolder.Roll.Visible = true
+	hookAction(mobileFolder.Roll)
+end
 
 local function setComputerUI()
 	for _, ui in mobileFolder:GetChildren() do
@@ -90,13 +111,14 @@ local function setComputerUI()
 	end
 
 	computerFolder.Roll.Visible = true
+	hookAction(computerFolder.Roll)
 end
 
 local function setOffhandUI(set)
 	local playerDevice = Spool:GetPlayerDevice()
 
 	if playerDevice == "Mobile" then
-		print("mobile offhand")
+		mobileFolder.Offhand.Visible = set
 	else
 		computerFolder.Offhand.Visible = set
 	end
@@ -106,7 +128,7 @@ local function setAbilityUI(set)
 	local playerDevice = Spool:GetPlayerDevice()
 
 	if playerDevice == "Mobile" then
-		print("mobile ability")
+		mobileFolder.Ability.Visible = set
 	else
 		computerFolder.Ability.Visible = set
 	end
@@ -191,7 +213,7 @@ local function toolf(tool, config)
 		setAbilityUI(true)
 	end
 
-	local function handleOffhandInput(_, actionState)
+	hooks["Offhand"] = function(_, actionState)
 		if not config:GetAttribute("OffDebounceTime") then
 			return
 		end
@@ -220,7 +242,7 @@ local function toolf(tool, config)
 		end
 	end
 
-	local function handleAbilityInput(_, actionState)
+	hooks["Ability"] = function(_, actionState)
 		if actionState == Enum.UserInputState.Begin then
 			if config:GetAttribute("Ability") == true then
 				local valid = toolAbility:InvokeServer(tool, config, false)
@@ -273,10 +295,10 @@ local function toolf(tool, config)
 		end
 	end)
 
-	ContextActionService:BindAction("OffhandInput", handleOffhandInput, false, Enum.KeyCode.F)
+	ContextActionService:BindAction("OffhandInput", hooks["Offhand"], false, Enum.KeyCode.F)
 	--ContextActionService:SetImage("OffhandInput", "http://www.roblox.com/asset/?id=11554338960")
 
-	ContextActionService:BindAction("AbilityInput", handleAbilityInput, false, Enum.KeyCode.Q)
+	ContextActionService:BindAction("AbilityInput", hooks["Ability"], false, Enum.KeyCode.Q)
 	--ContextActionService:SetImage("AbilityInput", "http://www.roblox.com/asset/?id=11884485716")
 
 	tool.Unequipped:Connect(function()
@@ -295,7 +317,12 @@ local function toolf(tool, config)
 end
 
 function ToolClient:Run()
-	rollDebounce.Event:Connect(function()
+	rollDebounce.Event:Connect(function(info)
+		if info then
+			hooks["Roll"] = info
+			return
+		end
+
 		startActivate("Roll")
 		startDebounce("Roll", 3)
 
