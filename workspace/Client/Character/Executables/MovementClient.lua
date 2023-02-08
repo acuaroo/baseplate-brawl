@@ -40,7 +40,7 @@ end
 function MovementClient:Run()
 	ContextActionService:BindAction("Sprint", handleSprintInput, false, sprintKey)
 	ContextActionService:BindAction("Roll", handleRollInput, false, rollKey)
-
+	rollDebounce:Fire(handleRollInput)
 	-- ContextActionService:SetImage("StartSprint", "rbxassetid://11684108736")
 	-- ContextActionService:SetPosition("StartSprint", UDim2.new(0.45, 0, 0, 0))
 end
