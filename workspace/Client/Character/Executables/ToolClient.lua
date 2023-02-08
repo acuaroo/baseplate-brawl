@@ -29,7 +29,6 @@ local rollDebounce = ReplicatedStorage["Events"].RollDebounce
 local activatedCon
 local spearCon
 
-<<<<<<< HEAD
 local SPEAR_OFFSET = Vector3.new(0, 3, 0)
 local SPEAR_PART_OFFSET = Vector3.new(0, 10, 0)
 local SPEAR_ANGLE = CFrame.Angles(0, math.rad(180), math.rad(90))
@@ -40,10 +39,9 @@ local UI_YELLOW = Color3.fromRGB(255, 213, 85)
 local UI_MIN = UDim2.new(1, 0, 0, 0)
 local UI_MAX = UDim2.new(1, 0, 1.006, 0)
 
-=======
 local touchConnections = {}
 local hooks = {}
->>>>>>> c671428e3835c3bd57a7eedb21563d0073318977
+
 local ToolClient = {}
 
 local function cleanupConnections()
@@ -231,13 +229,8 @@ local function toolf(tool, config)
 	setOffhandUI(offhandUIValid)
 	setAbilityUI(abilityUIValid)
 
-<<<<<<< HEAD
-	local function handleOffhandInput(_, actionState)
-		if not offhandUIValid then
-=======
 	hooks["Offhand"] = function(_, actionState)
 		if not config:GetAttribute("OffDebounceTime") then
->>>>>>> c671428e3835c3bd57a7eedb21563d0073318977
 			return
 		end
 
@@ -265,29 +258,24 @@ local function toolf(tool, config)
 		end
 	end
 
-<<<<<<< HEAD
-	local function handleAbilityInput(_, actionState)
-		if not (actionState == Enum.UserInputState.Begin) then
+	hooks["Ability"] = function(_, actionState)
+		if not actionState == Enum.UserInputState.Begin then
 			return
 		end
-=======
-	hooks["Ability"] = function(_, actionState)
-		if actionState == Enum.UserInputState.Begin then
-			if config:GetAttribute("Ability") == true then
-				local valid = toolAbility:InvokeServer(tool, config, false)
->>>>>>> c671428e3835c3bd57a7eedb21563d0073318977
 
-		if config:GetAttribute("Ability") == true then
-			local valid = toolAbility:InvokeServer(tool, config, false)
+		if not abilityUIValid then
+			return
+		end
 
-			if valid then
-				startActivate("Ability")
-				startDebounce("Ability", config:GetAttribute("AbilityDebounce") - 0.75)
+		local valid = toolAbility:InvokeServer(tool, config, false)
 
-				task.delay(0.3, function()
-					stopActivate("Ability")
-				end)
-			end
+		if valid then
+			startActivate("Ability")
+			startDebounce("Ability", config:GetAttribute("AbilityDebounce") - 0.75)
+
+			task.delay(0.3, function()
+				stopActivate("Ability")
+			end)
 		end
 	end
 
