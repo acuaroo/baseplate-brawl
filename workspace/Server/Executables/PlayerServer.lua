@@ -140,8 +140,8 @@ Players.PlayerAdded:Connect(function(player)
 		if humanoidState == Enum.HumanoidStateType.Jumping then
 			mult = 3.5
 		end
-
 		newVector.Force = Vector3.new(0, 0, -1) * (1000 * mult)
+		-- newVector.Force = Vector3.new(0, 0, -1) * (1000 * mult)
 		self.RollDebounce = true
 
 		animRelay:FireClient(player, "Roll")
@@ -266,10 +266,14 @@ function PlayerServer:Run()
 			return
 		end
 
+		--using literal on == false, because it might be nil
+
 		if on then
 			metaplayer:SprintRequest()
-		else
+		elseif on == false then
 			metaplayer:StopSprint()
+		else
+			return
 		end
 	end)
 

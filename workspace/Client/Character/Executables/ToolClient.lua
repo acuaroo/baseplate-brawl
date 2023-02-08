@@ -2,8 +2,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ContextActionService = game:GetService("ContextActionService")
-local Spool = require(script.Parent.Modules.Spool)
 local TweenService = game:GetService("TweenService")
+local Spool = require(script.Parent.Modules.Spool)
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -29,6 +29,16 @@ local rollDebounce = ReplicatedStorage["Events"].RollDebounce
 local activatedCon
 local spearCon
 
+local SPEAR_OFFSET = Vector3.new(0, 3, 0)
+local SPEAR_PART_OFFSET = Vector3.new(0, 10, 0)
+local SPEAR_ANGLE = CFrame.Angles(0, math.rad(180), math.rad(90))
+local SPEAR_DISTANCE = 167
+
+local UI_BLACK = Color3.fromRGB(0, 0, 0)
+local UI_YELLOW = Color3.fromRGB(255, 213, 85)
+local UI_MIN = UDim2.new(1, 0, 0, 0)
+local UI_MAX = UDim2.new(1, 0, 1.006, 0)
+
 local ToolClient = {}
 
 local function cleanupConnections()
@@ -37,7 +47,13 @@ local function cleanupConnections()
 		activatedCon = nil
 	end
 
+	if spearCon then
+		spearCon:Disconnect()
+		spearCon = nil
+	end
+
 	ContextActionService:UnbindAction("OffhandInput")
+	ContextActionService:UnbindAction("AbilityInput")
 end
 
 local functionality = {
@@ -47,8 +63,10 @@ local functionality = {
 			spearCon = nil
 		end
 
-		if workspace:FindFirstChild(char.Name .. "SpearVisual") then
-			workspace[char.Name .. "SpearVisual"]:Destroy()
+		local spearVisual = workspace.Debris:FindFirstChild(char.Name .. "SpearVisual")
+
+		if spearVisual then
+			spearVisual:Destroy()
 		end
 	end,
 }
@@ -59,12 +77,11 @@ local init = {
 
 		local spearPartA = ReplicatedStorage["Assets"]["Combat"].SpearPartA:Clone()
 		local spearPartB = ReplicatedStorage["Assets"]["Combat"].SpearPartB:Clone()
+		local beam = spearPartA.Attachment.Beam
 
 		local cache = Instance.new("Folder")
 		cache.Name = char.Name .. "SpearVisual"
-		cache.Parent = workspace
-
-		local beam = spearPartA.Attachment.Beam
+		cache.Parent = workspace.Debris
 
 		spearPartA.Parent = cache
 		spearPartB.Parent = cache
@@ -73,11 +90,11 @@ local init = {
 		beam.Attachment1 = spearPartB.Attachment
 
 		spearCon = RunService.RenderStepped:Connect(function()
-			spearPartA.Position = tool.Handle.ThrowPoint.WorldCFrame.Position - Vector3.new(0, 3, 0)
-			spearPartA.CFrame = (CFrame.new(spearPartA.Position) * char:GetPivot().Rotation)
-				* CFrame.Angles(0, math.rad(180), math.rad(90))
+			spearPartA.Position = tool.Handle.ThrowPoint.WorldCFrame.Position - SPEAR_OFFSET
+			spearPartA.CFrame = (CFrame.new(spearPartA.Position) * char:GetPivot().Rotation) * SPEAR_ANGLE
 
-			spearPartB.Position = (spearPartA.Position + spearPartA.CFrame.LookVector * -167) + Vector3.new(0, 10, 0)
+			spearPartB.Position = (spearPartA.Position + spearPartA.CFrame.LookVector * -SPEAR_DISTANCE)
+				+ SPEAR_PART_OFFSET
 		end)
 	end,
 }
@@ -127,7 +144,7 @@ local function startActivate(name)
 	end
 
 	local uiColorTweenInfo = TweenInfo.new(0.75, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
-	local uiColorTween = TweenService:Create(ui, uiColorTweenInfo, { BackgroundColor3 = Color3.fromRGB(255, 213, 85) })
+	local uiColorTween = TweenService:Create(ui, uiColorTweenInfo, { BackgroundColor3 = UI_YELLOW })
 	uiColorTween:Play()
 
 	ui.BackgroundTransparency = 0.7
@@ -147,7 +164,7 @@ local function stopActivate(name)
 		return
 	end
 
-	ui.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	ui.BackgroundColor3 = UI_BLACK
 	ui.BackgroundTransparency = 0.8
 end
 
@@ -167,32 +184,30 @@ local function startDebounce(name, cooldown)
 
 	task.spawn(function()
 		local cooldownUi = ui.Cooldown
-		cooldownUi.Size = UDim2.new(1, 0, 0, 0)
+		cooldownUi.Size = UI_MIN
 		cooldownUi.Visible = true
 
 		local cooldownTweenInfo = TweenInfo.new(tonumber(cooldown), Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 
-		local cooldownUiTween = TweenService:Create(cooldownUi, cooldownTweenInfo, { Size = UDim2.new(1, 0, 1.006, 0) })
+		local cooldownUiTween = TweenService:Create(cooldownUi, cooldownTweenInfo, { Size = UI_MAX })
 		cooldownUiTween:Play()
 
 		cooldownUiTween.Completed:Wait()
 
-		cooldownUi.Size = UDim2.new(1, 0, 0, 0)
+		cooldownUi.Size = UI_MIN
 		cooldownUi.Visible = false
 	end)
 end
 
 local function toolf(tool, config)
-	if config:GetAttribute("OffDebounceTime") then
-		setOffhandUI(true)
-	end
+	local offhandUIValid = config:GetAttribute("OffDebounceTime") ~= nil
+	local abilityUIValid = config:GetAttribute("Ability") == true
 
-	if config:GetAttribute("Ability") == true then
-		setAbilityUI(true)
-	end
+	setOffhandUI(offhandUIValid)
+	setAbilityUI(abilityUIValid)
 
 	local function handleOffhandInput(_, actionState)
-		if not config:GetAttribute("OffDebounceTime") then
+		if not offhandUIValid then
 			return
 		end
 
@@ -221,18 +236,20 @@ local function toolf(tool, config)
 	end
 
 	local function handleAbilityInput(_, actionState)
-		if actionState == Enum.UserInputState.Begin then
-			if config:GetAttribute("Ability") == true then
-				local valid = toolAbility:InvokeServer(tool, config, false)
+		if not (actionState == Enum.UserInputState.Begin) then
+			return
+		end
 
-				if valid then
-					startActivate("Ability")
-					startDebounce("Ability", config:GetAttribute("AbilityDebounce") - 0.75)
+		if config:GetAttribute("Ability") == true then
+			local valid = toolAbility:InvokeServer(tool, config, false)
 
-					task.delay(0.3, function()
-						stopActivate("Ability")
-					end)
-				end
+			if valid then
+				startActivate("Ability")
+				startDebounce("Ability", config:GetAttribute("AbilityDebounce") - 0.75)
+
+				task.delay(0.3, function()
+					stopActivate("Ability")
+				end)
 			end
 		end
 	end

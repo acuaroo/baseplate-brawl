@@ -15,23 +15,23 @@ function Spool:GetPlayerDevice()
 	local recentInput = UserInputService:GetLastInputType()
 
 	if UserInputService.KeyboardEnabled then
-		computerChance = computerChance + 1
+		computerChance += 1
 	end
 
 	if UserInputService.TouchEnabled then
-		mobileChance = mobileChance + 1
+		mobileChance += 1
 	end
 
 	if recentInput == keyboard or recentInput == mouse then
-		computerChance = computerChance + 1
+		computerChance += 1
 	end
 
 	if recentInput == mobile then
-		mobileChance = mobileChance + 1
+		mobileChance += 1
 	end
 
 	if recentInput == gyro or recentInput == accel then
-		mobileChance = mobileChance + 1
+		mobileChance += 1
 	end
 
 	if computerChance > mobileChance then

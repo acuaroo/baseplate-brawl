@@ -1,5 +1,4 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
---local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ContextActionService = game:GetService("ContextActionService")
 
@@ -25,12 +24,16 @@ local function handleSprintInput(_, actionState)
 end
 
 local function handleRollInput(_, actionState)
-	if actionState == Enum.UserInputState.Begin and humanoid.MoveDirection.Magnitude >= 0 then
-		local valid = roll:InvokeServer()
+	local rollValid = actionState == Enum.UserInputState.Begin and humanoid.MoveDirection.Magnitude >= 0
 
-		if valid then
-			rollDebounce:Fire()
-		end
+	if not rollValid then
+		return
+	end
+
+	local valid = roll:InvokeServer()
+
+	if valid then
+		rollDebounce:Fire()
 	end
 end
 

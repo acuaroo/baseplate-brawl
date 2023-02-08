@@ -1,15 +1,3 @@
---[[
-
-	GuiClient:Run()
-	-- starts up the gui client, responsible for
-		-hotbar
-		-statuses
-		-health
-		-notifications
-		-souls
-		
-]]
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
@@ -50,6 +38,9 @@ local VISUAL_OFFSET = CFrame.new(Vector3.new(0, 1.5, 0), Vector3.new(0, 0, 50))
 local ROTATIONAL_OFFSET = CFrame.Angles(math.rad(-45), 0, math.rad(45))
 local TOOL_RATIO = 6.24531601299
 
+local RED_ARROW = Color3.fromRGB(255, 129, 131)
+local GREEN_ARROW = Color3.fromRGB(178, 255, 174)
+
 local validKeyCodes = {
 	[Enum.KeyCode.One] = { 1, Enum.KeyCode.One },
 	[Enum.KeyCode.Two] = { 2, Enum.KeyCode.Two },
@@ -74,19 +65,22 @@ local function renderStatus(stat)
 		return
 	end
 
-	stat.Arrow.Visible = true
+	local statEffect = stat:GetAttribute("Effect")
+	local statArrow = stat.Arrow
+	local hover = stat.Hover
 
-	if stat:GetAttribute("Effect") < 0 then
-		stat.Arrow.Rotation = 180
-		stat.Arrow.ImageColor3 = Color3.fromRGB(255, 129, 131)
+	if statEffect < 0 then
+		statArrow.Rotation = 180
+		statArrow.ImageColor3 = RED_ARROW
 	else
-		stat.Arrow.Rotation = 0
-		stat.Arrow.ImageColor3 = Color3.fromRGB(178, 255, 174)
+		statArrow.Rotation = 0
+		statArrow.ImageColor3 = GREEN_ARROW
 	end
 
-	local hover = stat.Hover
+	statArrow.Visible = true
+
 	hover.Title.Text = stat:GetAttribute("Name")
-	hover.Description.Text = tostring(math.floor(stat:GetAttribute("Effect") * 10))
+	hover.Description.Text = tostring(math.floor(statEffect * 10))
 		.. "x, "
 		.. tostring(math.floor(stat:GetAttribute("Duration")))
 		.. " sec"
@@ -108,19 +102,12 @@ local function delayStatus(status)
 		end
 
 		if (stat:GetAttribute("Override") or 0) >= 1 then
-			--local hover = stat:FindFirstChild("Hover")
-
-			--if hover then
 			stat:SetAttribute("Effect", (stat:GetAttribute("Effect") - status["Effect"]))
 			stat:SetAttribute("Duration", (stat:GetAttribute("Duration") - status["Duration"]))
+
 			renderStatus(stat)
-			--end
 
 			stat:SetAttribute("Override", stat:GetAttribute("Override") - 1)
-
-			-- if stat:GetAttribute("Override") == 0 then
-			-- 	stat:SetAttribute("OverrideValue", nil)
-			-- end
 			return
 		end
 
@@ -158,14 +145,17 @@ local function sortBackpack()
 
 		local toolVisual = tool:FindFirstChild("Build")
 		if not toolVisual then
+			warn("[GUI]: No BuildModel for " .. tool.Name)
 			continue
 		end
 
 		toolVisual = toolVisual:Clone()
 
 		if not toolVisual.PrimaryPart then
+			warn("[GUI]: No PrimaryPart for " .. tool.Name)
 			continue
 		end
+
 		toolVisual:SetPrimaryPartCFrame(VISUAL_OFFSET)
 
 		local toolSettings = toolVisual:FindFirstChild("Settings")
@@ -251,28 +241,24 @@ local function notification(frame, resetPosition, outPosition, args)
 end
 
 local function loopRemoved(obj)
-	local count = 0
-
-	for _, tool in pairs(tools) do
-		count += 1
-		if tool == obj then
-			table.remove(tools, count)
-
-			if hotConnections[count] then
-				hotConnections[count]:Disconnect()
-				hotConnections[count] = nil
-			end
-
-			sortBackpack()
-			break
+	for index, tool in pairs(tools) do
+		if not (tool == obj) then
+			continue
 		end
+
+		table.remove(tools, index)
+
+		if hotConnections[index] then
+			hotConnections[index]:Disconnect()
+			hotConnections[index] = nil
+		end
+
+		sortBackpack()
+		break
 	end
 end
 
-function GuiClient:Run()
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
-
+local function initializeBackpack()
 	backpack.ChildAdded:Connect(function(obj)
 		if obj:IsA("Tool") and not table.find(tools, obj) then
 			table.insert(tools, obj)
@@ -306,19 +292,26 @@ function GuiClient:Run()
 			toolCheck(currentTool)
 		end
 	end)
+end
 
+local function intializeHealth()
 	humanoid.HealthChanged:Connect(function()
 		local maxHealth = humanoid.MaxHealth
 		local newPos = math.clamp((humanoid.Health / maxHealth), 0, maxHealth)
 
 		currentHealth:TweenSize(UDim2.new(newPos, 0, 1, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, 0.1)
 	end)
+end
 
+local function intializeSouls()
 	soulCount.Text = souls.Value
+
 	souls.Changed:Connect(function()
 		soulCount.Text = souls.Value
 	end)
+end
 
+local function listenToNotifications()
 	notificationChannel.OnClientEvent:Connect(function(args, opp, statusArgs)
 		-- args[4] is cancel value
 		if args[4] == false then
@@ -336,6 +329,16 @@ function GuiClient:Run()
 			notification(notificationOpp.Notification, notificationOppReset, notificationOppOut, args)
 		end
 	end)
+end
+
+function GuiClient:Run()
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+
+	task.spawn(initializeBackpack)
+	task.spawn(intializeHealth)
+	task.spawn(intializeSouls)
+	task.spawn(listenToNotifications)
 end
 
 return GuiClient
