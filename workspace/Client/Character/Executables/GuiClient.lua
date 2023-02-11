@@ -14,6 +14,11 @@ local hotbarFrame = statsFrame.HotbarFrame
 
 local toolEquip = ReplicatedStorage["Events"].ToolEquip
 local notificationChannel = ReplicatedStorage["Events"].Notification
+-- local gameState = ReplicatedStorage["Events"].GetGameState
+
+-- local shop = workspace:WaitForChild("Shop")
+-- local shopInteract = shop:WaitForChild("ShopInteract")
+-- local shopCamera = shop:WaitForChild("ShopCamera")
 
 local notificationMain = statsFrame.NotificationMain
 local notificationMainReset = UDim2.new(3, 0, 1.067, 0)
@@ -33,6 +38,7 @@ local statusFrame = statsFrame.Status
 local statusTemplate = statusFrame.UIListLayout.Status
 
 local tools = backpack:GetChildren()
+-- local currentState = nil
 
 local VISUAL_OFFSET = CFrame.new(Vector3.new(0, 1.5, 0), Vector3.new(0, 0, 50))
 local ROTATIONAL_OFFSET = CFrame.Angles(math.rad(-45), 0, math.rad(45))
@@ -338,6 +344,7 @@ function GuiClient:Run()
 	task.spawn(initializeBackpack)
 	task.spawn(intializeHealth)
 	task.spawn(intializeSouls)
+
 	task.spawn(listenToNotifications)
 end
 

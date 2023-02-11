@@ -24,6 +24,7 @@ local roll = ReplicatedStorage["Events"].Roll
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 local debug = ReplicatedStorage["Events"].Debug
+local gameState = ReplicatedStorage["Events"].GetGameState
 
 local antiSprint = {
 	"SLOW",
@@ -57,6 +58,7 @@ Players.PlayerAdded:Connect(function(player)
 	playerTrace.SecondaryState = "NONE"
 	playerTrace.PreviousPrimary = "NONE"
 	playerTrace.MovementState = "WALKING"
+	playerTrace.GameState = "GAME"
 
 	playerTrace._trove = Trove.new()
 	playerTrace._player = player
@@ -288,6 +290,17 @@ function PlayerServer:Run()
 
 		return validRequest
 	end
+
+	gameState.OnServerEvent:Connect(function(player)
+		local metaplayer = PlayerServer[player]
+
+		if not metaplayer then
+			return false
+		end
+
+		print(metaplayer.GameState)
+		return metaplayer.GameState
+	end)
 end
 
 return PlayerServer
