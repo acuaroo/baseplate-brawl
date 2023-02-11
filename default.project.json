@@ -7,12 +7,12 @@
       "$ignoreUnknownInstances": true,
       "$path": "workspace/Server"
     },
-    "ReplicatedStorage": {
-      "$className": "ReplicatedStorage",
-      "Shared": {
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Modules": {
         "$className": "Folder",
         "$ignoreUnknownInstances": true,
-        "$path": "workspace/Shared"
+        "$path": "workspace/Modules"
       },
       "$ignoreUnknownInstances": true
     },
