@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
+
 local backpack = player.Backpack
 local playerGui = player.PlayerGui
 local hotbarGui = playerGui.Hotbar
@@ -14,11 +15,6 @@ local hotbarFrame = statsFrame.HotbarFrame
 
 local toolEquip = ReplicatedStorage["Events"].ToolEquip
 local notificationChannel = ReplicatedStorage["Events"].Notification
--- local gameState = ReplicatedStorage["Events"].GetGameState
-
--- local shop = workspace:WaitForChild("Shop")
--- local shopInteract = shop:WaitForChild("ShopInteract")
--- local shopCamera = shop:WaitForChild("ShopCamera")
 
 local notificationMain = statsFrame.NotificationMain
 local notificationMainReset = UDim2.new(3, 0, 1.067, 0)
@@ -138,6 +134,34 @@ local function toolCheck(currentTool)
 	end
 end
 
+local function viewPortize(toolVisual, viewport)
+	toolVisual:SetPrimaryPartCFrame(VISUAL_OFFSET)
+
+	local toolSettings = toolVisual:FindFirstChild("Settings")
+
+	if toolSettings:GetAttribute("VisualCFrame") then
+		local customVisualCFrame = toolSettings:GetAttribute("VisualCFrame")
+		toolVisual:SetPrimaryPartCFrame(customVisualCFrame)
+	end
+
+	toolVisual.Parent = viewport
+
+	local viewportCamera = Instance.new("Camera")
+	viewportCamera.Parent = viewport
+	viewport.CurrentCamera = viewportCamera
+
+	if toolSettings:GetAttribute("CameraCFrame") then
+		local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
+		viewportCamera.CFrame = customCameraCFrame
+	else
+		viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * TOOL_RATIO)))
+			* ROTATIONAL_OFFSET
+	end
+
+	viewportCamera.DiagonalFieldOfView = 0.7
+	viewportCamera.FieldOfView = toolSettings:GetAttribute("FOV")
+end
+
 local function sortBackpack()
 	for index, tool in pairs(tools) do
 		local hotbarSlot = hotbarFrame["Slot" .. index]
@@ -162,31 +186,7 @@ local function sortBackpack()
 			continue
 		end
 
-		toolVisual:SetPrimaryPartCFrame(VISUAL_OFFSET)
-
-		local toolSettings = toolVisual:FindFirstChild("Settings")
-
-		if toolSettings:GetAttribute("VisualCFrame") then
-			local customVisualCFrame = toolSettings:GetAttribute("VisualCFrame")
-			toolVisual:SetPrimaryPartCFrame(customVisualCFrame)
-		end
-
-		toolVisual.Parent = viewport
-
-		local viewportCamera = Instance.new("Camera")
-		viewportCamera.Parent = viewport
-		viewport.CurrentCamera = viewportCamera
-
-		if toolSettings:GetAttribute("CameraCFrame") then
-			local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
-			viewportCamera.CFrame = customCameraCFrame
-		else
-			viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * TOOL_RATIO)))
-				* ROTATIONAL_OFFSET
-		end
-
-		viewportCamera.DiagonalFieldOfView = 0.7
-		viewportCamera.FieldOfView = toolSettings:GetAttribute("FOV")
+		viewPortize(toolVisual, viewport)
 
 		hotConnections[index] = hotbarSlot.MouseButton1Down:Connect(function()
 			local currentTool = tools[index]
@@ -344,7 +344,6 @@ function GuiClient:Run()
 	task.spawn(initializeBackpack)
 	task.spawn(intializeHealth)
 	task.spawn(intializeSouls)
-
 	task.spawn(listenToNotifications)
 end
 

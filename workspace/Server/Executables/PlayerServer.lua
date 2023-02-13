@@ -25,6 +25,10 @@ local animRelay = ReplicatedStorage["Events"].AnimRelay
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 local debug = ReplicatedStorage["Events"].Debug
 local gameState = ReplicatedStorage["Events"].GetGameState
+local shopInteracted = ReplicatedStorage["Events"].ShopInteracted
+
+local shop = workspace:WaitForChild("Shop")
+local shopInteract = shop:WaitForChild("ShopInteract")
 
 local antiSprint = {
 	"SLOW",
@@ -59,6 +63,7 @@ Players.PlayerAdded:Connect(function(player)
 	playerTrace.PreviousPrimary = "NONE"
 	playerTrace.MovementState = "WALKING"
 	playerTrace.GameState = "GAME"
+	playerTrace.Immune = false
 
 	playerTrace._trove = Trove.new()
 	playerTrace._player = player
@@ -232,6 +237,17 @@ Players.PlayerAdded:Connect(function(player)
 		end)
 	end
 
+	function playerTrace:SetImmune(set)
+		local humanoid = player.Character:FindFirstChild("Humanoid")
+
+		if not humanoid then
+			return false
+		end
+
+		humanoid:SetAttribute("Immune", set)
+		self.Immune = set
+	end
+
 	player.CharacterAdded:Connect(function(character)
 		local humanoid = character:WaitForChild("Humanoid")
 
@@ -260,6 +276,22 @@ Players.PlayerRemoving:Connect(function(player)
 	PlayerServer[player]._trove:Destroy()
 	PlayerServer[player] = nil
 end)
+
+local function setForcefield(character)
+	for _, part in character:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Material = Enum.Material.ForceField
+		end
+	end
+end
+
+local function undoForcefield(character)
+	for _, part in character:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.Material = Enum.Material.Plastic
+		end
+	end
+end
 
 function PlayerServer:Run()
 	sprint.OnServerEvent:Connect(function(player, on)
@@ -300,6 +332,42 @@ function PlayerServer:Run()
 
 		print(metaplayer.GameState)
 		return metaplayer.GameState
+	end)
+
+	shopInteract.Prompt.Triggered:Connect(function(player)
+		local metaplayer = PlayerServer[player]
+
+		if not metaplayer then
+			return false
+		end
+
+		metaplayer:SetPrimary("NOMOVE")
+		metaplayer:SetImmune(true)
+		metaplayer.GameState = "SHOP"
+
+		setForcefield(player.Character)
+
+		shopInteracted:FireClient(player, true)
+	end)
+
+	shopInteracted.OnServerEvent:Connect(function(player)
+		local metaplayer = PlayerServer[player]
+
+		if not metaplayer then
+			return false
+		end
+
+		if not metaplayer.GameState == "GAME" then
+			return
+		end
+
+		metaplayer:SetPrimary("NONE")
+		metaplayer:SetImmune(false)
+		metaplayer.GameState = "GAME"
+
+		undoForcefield(player.Character)
+
+		shopInteracted:FireClient(player, false)
 	end)
 end
 

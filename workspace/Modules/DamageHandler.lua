@@ -119,6 +119,10 @@ function DamageHandler:Damage(player, enemyHumanoid, _, config, indicate, hitLoc
 	local critMult = config:GetAttribute("CritMult")
 	local playerHumanoid = player.Character:FindFirstChild("Humanoid")
 
+	if playerHumanoid:GetAttribute("Immune") == true then
+		return 0, false
+	end
+
 	local damage = baseDamage
 	local isCrit = false
 
