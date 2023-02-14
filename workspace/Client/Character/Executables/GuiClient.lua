@@ -286,7 +286,7 @@ local function initializeBackpack()
 	end)
 
 	sortBackpack()
-
+	-- added main input
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		if gameProcessed then
 			return
