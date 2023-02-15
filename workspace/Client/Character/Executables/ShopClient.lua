@@ -61,11 +61,41 @@ local function tweenInFrame(frameName)
 	end
 end
 
-local function changeContent(contentFrame, item)
-	contentFrame.Title.Text = string.lower(item.name)
-	contentFrame.Description.Text = item.description
-	contentFrame.SoulFrame.TextLabel.Text = item.price
+local function viewPortize(toolVisual, viewport)
+	for _, obj in viewport:GetChildren() do
+		if obj:IsA("Model") then
+			obj:Destroy()
+		end
+	end
 
+	toolVisual:SetPrimaryPartCFrame(VISUAL_OFFSET)
+
+	local toolSettings = toolVisual:FindFirstChild("Settings")
+
+	if toolSettings:GetAttribute("VisualCFrame") then
+		local customVisualCFrame = toolSettings:GetAttribute("VisualCFrame")
+		toolVisual:SetPrimaryPartCFrame(customVisualCFrame)
+	end
+
+	toolVisual.Parent = viewport
+
+	local viewportCamera = Instance.new("Camera")
+	viewportCamera.Parent = viewport
+	viewport.CurrentCamera = viewportCamera
+
+	if toolSettings:GetAttribute("CameraCFrame") then
+		local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
+		viewportCamera.CFrame = customCameraCFrame
+	else
+		viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * TOOL_RATIO)))
+			* ROTATIONAL_OFFSET
+	end
+
+	viewportCamera.DiagonalFieldOfView = 0.7
+	viewportCamera.FieldOfView = toolSettings:GetAttribute("FOV")
+end
+
+local function buyButton(contentFrame, item)
 	if hookBuy then
 		hookBuy:Disconnect()
 		hookBuy = nil
@@ -98,6 +128,27 @@ local function changeContent(contentFrame, item)
 	end)
 end
 
+local function inventoryButtons(contentFrame, item)
+	print("something")
+end
+
+local function changeContent(contentFrame, item, itemVisual, mode)
+	contentFrame.Title.Text = string.lower(item.name)
+	contentFrame.Description.Text = item.description
+
+	if mode == "Buy" then
+		contentFrame.SoulFrame.TextLabel.Text = item.price
+	end
+
+	viewPortize(itemVisual, contentFrame.ItemViewport)
+
+	if mode == "Buy" then
+		buyButton(contentFrame, item)
+	elseif mode == "Inventory" then
+		inventoryButtons(contentFrame, item)
+	end
+end
+
 local function unloadHotbar()
 	local statsFrame = playerGui.Hotbar.StatsFrame
 	statsFrame:TweenPosition(UDim2.new(0.5, 0, 2, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 1)
@@ -106,34 +157,6 @@ end
 local function loadHotbar()
 	local statsFrame = playerGui.Hotbar.StatsFrame
 	statsFrame:TweenPosition(UDim2.new(0.5, 0, 0.76, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 1)
-end
-
-local function viewPortize(toolVisual, viewport)
-	toolVisual:SetPrimaryPartCFrame(VISUAL_OFFSET)
-
-	local toolSettings = toolVisual:FindFirstChild("Settings")
-
-	if toolSettings:GetAttribute("VisualCFrame") then
-		local customVisualCFrame = toolSettings:GetAttribute("VisualCFrame")
-		toolVisual:SetPrimaryPartCFrame(customVisualCFrame)
-	end
-
-	toolVisual.Parent = viewport
-
-	local viewportCamera = Instance.new("Camera")
-	viewportCamera.Parent = viewport
-	viewport.CurrentCamera = viewportCamera
-
-	if toolSettings:GetAttribute("CameraCFrame") then
-		local customCameraCFrame = toolSettings:GetAttribute("CameraCFrame")
-		viewportCamera.CFrame = customCameraCFrame
-	else
-		viewportCamera.CFrame = CFrame.new(Vector3.new(0, 25.2, (toolVisual.PrimaryPart.Size.Z * TOOL_RATIO)))
-			* ROTATIONAL_OFFSET
-	end
-
-	viewportCamera.DiagonalFieldOfView = 0.7
-	viewportCamera.FieldOfView = toolSettings:GetAttribute("FOV")
 end
 
 local loadedFunctions = {
@@ -162,7 +185,7 @@ local loadedFunctions = {
 			end
 
 			shopHooks[item.name] = newTemplate.Click.MouseButton1Down:Connect(function()
-				changeContent(frame, item)
+				changeContent(frame, item, itemBuild:Clone(), "Buy")
 			end)
 		end
 
@@ -171,6 +194,27 @@ local loadedFunctions = {
 	["Bag"] = function()
 		local frame = tweenInFrame("Bag")
 
+		local itemScroller = frame.ItemScroller
+		local itemTemplate = itemScroller.UIGridLayout.ItemTemplate
+
+		local shopItems = dataRequest:InvokeServer("Inventory")
+		local shopHooks = {}
+
+		for _, item in shopItems do
+			local newTemplate = itemTemplate:Clone()
+			newTemplate.Parent = itemScroller
+			newTemplate.Title.Text = string.lower(item.name)
+
+			local itemBuild = ReplicatedStorage["Assets"]["ToolBuilds"]:FindFirstChild(item.name):Clone()
+
+			if itemBuild then
+				viewPortize(itemBuild, newTemplate)
+			end
+
+			shopHooks[item.name] = newTemplate.Click.MouseButton1Down:Connect(function()
+				changeContent(frame, item, itemBuild:Clone(), "Inventory")
+			end)
+		end
 		--print(frame.Name .. " req")
 	end,
 }

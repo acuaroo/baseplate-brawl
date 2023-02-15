@@ -30,10 +30,22 @@ local dataRequest = ReplicatedStorage["Events"].DataRequest
 local currentHash = "G@D7&S"
 
 local toolIndex = {
-	["Starter Sword"] = { name = "Starter Sword", equipped = 0 },
-	["Meteor Staff"] = { name = "Meteor Staff", equipped = 0 },
-	["Cursed Spear"] = { name = "Cursed Spear", equipped = 0 },
-	["Sword"] = { name = "Sword", equipped = 0 },
+	["Starter Sword"] = {
+		name = "Starter Sword",
+		equipped = 0,
+		description = toolFolder["Starter Sword"]:GetAttribute("Description"),
+	},
+	["Meteor Staff"] = {
+		name = "Meteor Staff",
+		equipped = 0,
+		description = toolFolder["Meteor Staff"]:GetAttribute("Description"),
+	},
+	["Cursed Spear"] = {
+		name = "Cursed Spear",
+		equipped = 0,
+		description = toolFolder["Cursed Spear"]:GetAttribute("Description"),
+	},
+	["Sword"] = { name = "Sword", equipped = 0, description = toolFolder["Sword"]:GetAttribute("Description") },
 }
 
 local defaultTemplate = {
@@ -68,6 +80,15 @@ end
 local requests = {
 	["ShopList"] = function(_, _)
 		return activeShopList
+	end,
+	["Inventory"] = function(player, _)
+		local res = table.clone(DataServer:GetProfile(player).tools)
+
+		for _, tool in res do
+			tool.description = toolIndex[tool.name].description
+		end
+
+		return res
 	end,
 	["Buy"] = function(player, itemName)
 		local validItem = activeShopList[itemName]
