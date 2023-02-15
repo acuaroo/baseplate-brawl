@@ -22,23 +22,24 @@ local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 local ProfileService = require(ServerStorage["Modules"].ProfileService)
 
-local shopList = ReplicatedStorage["Events"].ShopList
-local purchase = ReplicatedStorage["Events"].Purchase
+-- local shopList = ReplicatedStorage["Events"].ShopList
+-- local purchase = ReplicatedStorage["Events"].Purchase
 local toolFolder = ServerStorage["Assets"].Tools
+local dataRequest = ReplicatedStorage["Events"].DataRequest
 
-local currentHash = "G@D7SS"
+local currentHash = "G@D7&S"
 
 local toolIndex = {
-	["Starter Sword"] = { name = "Starter Sword", equipped = false },
-	["Meteor Staff"] = { name = "Meteor Staff", equipped = false },
-	["Cursed Spear"] = { name = "Cursed Spear", equipped = false },
-	["Sword"] = { name = "Sword", equipped = false },
+	["Starter Sword"] = { name = "Starter Sword", equipped = 0 },
+	["Meteor Staff"] = { name = "Meteor Staff", equipped = 0 },
+	["Cursed Spear"] = { name = "Cursed Spear", equipped = 0 },
+	["Sword"] = { name = "Sword", equipped = 0 },
 }
 
 local defaultTemplate = {
 	souls = 0,
 	tools = {
-		["Starter Sword"] = { name = "Starter Sword", equipped = true },
+		["Starter Sword"] = { name = "Starter Sword", equipped = 1 },
 	},
 	playerSettings = {
 		["Music"] = true,
@@ -57,12 +58,49 @@ local DataServer = {}
 
 local function kick(player)
 	player:Kick(
-		"sorry, we're having some data issues. if the issue persists, contact us.\n UXH = "
+		"sorry, we're having some data issues! if the issue persists, contact us.\n UXH = "
 			.. currentHash
 			.. "|"
 			.. player.UserId
 	)
 end
+
+local requests = {
+	["ShopList"] = function(_, _)
+		return activeShopList
+	end,
+	["Buy"] = function(player, itemName)
+		local validItem = activeShopList[itemName]
+
+		if validItem then
+			local profile = DataServer:GetProfile(player)
+
+			if not profile then
+				return kick(player)
+			end
+
+			if profile.souls >= validItem.price then
+				if not profile.tools[itemName] then
+					local toolConstructor = {
+						name = validItem.name,
+						equipped = 0,
+					}
+
+					DataServer:AddTool(player, toolConstructor)
+					DataServer:IncrementSouls(player, -validItem.price)
+
+					return "bought!"
+				else
+					return "you already own this, go to your bag to equip this!"
+				end
+			else
+				return "not enough souls!"
+			end
+		else
+			return "you shouldn't have known about that..."
+		end
+	end,
+}
 
 local function addTool(player, tool)
 	local folderTool = toolFolder:FindFirstChild(tool.name)
@@ -103,10 +141,17 @@ local function addLeaderstats(player)
 	souls.Parent = leaderstats
 	souls.Value = profile.Data.souls
 
+	local order = {}
+
 	for _, tool in profile.Data.tools do
-		if tool.equipped then
-			addTool(player, tool)
+		if tool.equipped ~= 0 then
+			order[tool.equipped] = tool
+			--addTool(player, tool)
 		end
+	end
+
+	for _, tool in ipairs(order) do
+		addTool(player, tool)
 	end
 end
 
@@ -148,37 +193,45 @@ function DataServer:Run()
 		end
 	end)
 
-	shopList.OnServerInvoke = function(_)
-		return activeShopList
-	end
+	dataRequest.OnServerInvoke = function(player, request, args)
+		local validRequest = requests[request]
 
-	purchase.OnServerInvoke = function(player, itemInfo)
-		local shopItem = activeShopList[itemInfo.name]
-
-		if shopItem then
-			local profile = DataServer:GetProfile(player)
-
-			if not profile then
-				warn("[DATA]: " .. player.Name .. " attempted to buy a tool without a valid data profile")
-				return "datastore error, please rejoin if you see this!"
-			end
-
-			if profile.tools[shopItem.name] then
-				return "you already own this..."
-			end
-
-			if profile.souls < shopItem.price then
-				return "too poor :("
-			end
-
-			DataServer:IncrementSouls(player, -shopItem.price)
-			DataServer:AddTool(player, toolIndex[shopItem.name])
-
-			return "bought! go to your bag to equip"
-		else
-			return "datastore error, you requested something you shouldn't have known about..."
+		if validRequest then
+			return validRequest(player, args)
 		end
 	end
+
+	-- shopList.OnServerInvoke = function(_)
+	-- 	return activeShopList
+	-- end
+
+	-- purchase.OnServerInvoke = function(player, itemInfo)
+	-- 	local shopItem = activeShopList[itemInfo.name]
+
+	-- 	if shopItem then
+	-- 		local profile = DataServer:GetProfile(player)
+
+	-- 		if not profile then
+	-- 			warn("[DATA]: " .. player.Name .. " attempted to buy a tool without a valid data profile")
+	-- 			return "datastore error, please rejoin if you see this!"
+	-- 		end
+
+	-- 		if profile.tools[shopItem.name] then
+	-- 			return "you already own this..."
+	-- 		end
+
+	-- 		if profile.souls < shopItem.price then
+	-- 			return "too poor :("
+	-- 		end
+
+	-- 		DataServer:IncrementSouls(player, -shopItem.price)
+	-- 		DataServer:AddTool(player, toolIndex[shopItem.name])
+
+	-- 		return "bought! go to your bag to equip"
+	-- 	else
+	-- 		return "datastore error, you requested something you shouldn't have known about..."
+	-- 	end
+	-- end
 end
 
 function DataServer:GetProfile(player)
@@ -195,12 +248,10 @@ function DataServer:IncrementSouls(player, amount)
 end
 
 function DataServer:AddTool(player, newTool)
-	print(newTool)
-
 	if Profiles[player] then
 		Profiles[player].Data.tools[newTool.name] = newTool
 
-		if newTool.equipped then
+		if newTool.equipped ~= 0 then
 			addTool(player, newTool)
 		end
 	end

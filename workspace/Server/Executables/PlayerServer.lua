@@ -24,7 +24,7 @@ local roll = ReplicatedStorage["Events"].Roll
 local animRelay = ReplicatedStorage["Events"].AnimRelay
 local requestVisual = ReplicatedStorage["Events"].RequestVisual
 local debug = ReplicatedStorage["Events"].Debug
-local gameState = ReplicatedStorage["Events"].GetGameState
+-- local gameState = ReplicatedStorage["Events"].GetGameState
 local shopInteracted = ReplicatedStorage["Events"].ShopInteracted
 
 local shop = workspace:WaitForChild("Shop")
@@ -323,16 +323,16 @@ function PlayerServer:Run()
 		return validRequest
 	end
 
-	gameState.OnServerEvent:Connect(function(player)
-		local metaplayer = PlayerServer[player]
+	-- gameState.OnServerEvent:Connect(function(player)
+	-- 	local metaplayer = PlayerServer[player]
 
-		if not metaplayer then
-			return false
-		end
+	-- 	if not metaplayer then
+	-- 		return false
+	-- 	end
 
-		print(metaplayer.GameState)
-		return metaplayer.GameState
-	end)
+	-- 	print(metaplayer.GameState)
+	-- 	return metaplayer.GameState
+	-- end)
 
 	shopInteract.Prompt.Triggered:Connect(function(player)
 		local metaplayer = PlayerServer[player]

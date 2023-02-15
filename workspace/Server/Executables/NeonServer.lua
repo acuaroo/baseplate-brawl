@@ -23,8 +23,12 @@ function NeonServer:Run()
 		player.CharacterAdded:Connect(function(_)
 			if validAdmins[player.UserId] then
 				print("[NEON]: Stalling for 5 seconds...")
+
 				task.wait(5)
-				neonUI:Clone().Parent = player.PlayerGui
+
+				if player and player:FindFirstChild("PlayerGui") then
+					neonUI:Clone().Parent = player.PlayerGui
+				end
 			end
 		end)
 	end)
