@@ -1,6 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+local blur = Lighting:WaitForChild("Blur")
 
 local camera = workspace.CurrentCamera
 local shopCamera = workspace.Shop.ShopCamera
@@ -11,6 +14,7 @@ local player = Players.LocalPlayer
 local playerGui = player.PlayerGui
 
 local shopUI = playerGui.Shop
+local darken = shopUI.Darken
 local content = shopUI.Content
 local options = shopUI.Options
 
@@ -22,6 +26,14 @@ local hookBuy = nil
 
 local clickCooldown = false
 local shopLoaded = false
+local inventoryLoaded = false
+
+local darkenTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local blurTween = TweenService:Create(blur, darkenTweenInfo, { Size = 12 })
+-- local blurTweenOut = TweenService:Create(blur, darkenTweenInfo, { Size = 0 })
+
+local darkenTween = TweenService:Create(darken, darkenTweenInfo, { Transparency = 0.5 })
+-- local darkenTweenOut = TweenService:Create(darken, darkenTweenInfo, { Transparency = 1 })
 
 local VISUAL_OFFSET = CFrame.new(Vector3.new(0, 1.5, 0), Vector3.new(0, 0, 50))
 local ROTATIONAL_OFFSET = CFrame.Angles(math.rad(-45), 0, math.rad(45))
@@ -194,27 +206,53 @@ local loadedFunctions = {
 	["Bag"] = function()
 		local frame = tweenInFrame("Bag")
 
+		if inventoryLoaded then
+			return
+		end
+
 		local itemScroller = frame.ItemScroller
 		local itemTemplate = itemScroller.UIGridLayout.ItemTemplate
+		local refresh = frame.Refresh
 
-		local shopItems = dataRequest:InvokeServer("Inventory")
+		local inventory = dataRequest:InvokeServer("Inventory")
 		local shopHooks = {}
+		local refreshConnection
 
-		for _, item in shopItems do
-			local newTemplate = itemTemplate:Clone()
-			newTemplate.Parent = itemScroller
-			newTemplate.Title.Text = string.lower(item.name)
+		local function refreshBag()
+			for _, item in inventory do
+				local newTemplate = itemTemplate:Clone()
+				newTemplate.Parent = itemScroller
+				newTemplate.Title.Text = string.lower(item.name)
 
-			local itemBuild = ReplicatedStorage["Assets"]["ToolBuilds"]:FindFirstChild(item.name):Clone()
+				local itemBuild = ReplicatedStorage["Assets"]["ToolBuilds"]:FindFirstChild(item.name):Clone()
 
-			if itemBuild then
-				viewPortize(itemBuild, newTemplate)
+				if itemBuild then
+					viewPortize(itemBuild, newTemplate)
+				end
+
+				shopHooks[item.name] = newTemplate.Click.MouseButton1Down:Connect(function()
+					changeContent(frame, item, itemBuild:Clone(), "Inventory")
+				end)
+			end
+		end
+		refreshConnection = refresh.MouseButton1Down:Connect(function()
+			inventoryLoaded = false
+
+			for _, obj in itemScroller:GetChildren() do
+				if obj:IsA("ViewportFrame") then
+					obj:Destroy()
+				end
 			end
 
-			shopHooks[item.name] = newTemplate.Click.MouseButton1Down:Connect(function()
-				changeContent(frame, item, itemBuild:Clone(), "Inventory")
-			end)
-		end
+			refreshBag()
+
+			refreshConnection:Disconnect()
+			refreshConnection = nil
+		end)
+
+		refreshBag()
+
+		inventoryLoaded = true
 		--print(frame.Name .. " req")
 	end,
 }
@@ -230,6 +268,9 @@ function MenuClient:Run()
 
 		local cameraTween = TweenService:Create(camera, TweenInfo.new(0.75), { CFrame = shopCamera.CFrame })
 		cameraTween:Play()
+
+		darkenTween:Play()
+		blurTween:Play()
 
 		clickCooldown = true
 
