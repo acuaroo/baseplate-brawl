@@ -20,8 +20,12 @@
       "$className": "StarterPlayer",
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$ignoreUnknownInstances": true,
-        "$path": "workspace/Client/Character"
+        "Client": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": true,
+          "$path": "workspace/Client/Character"
+        },
+        "$ignoreUnknownInstances": true
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
