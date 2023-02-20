@@ -1,14 +1,12 @@
 -- local Madwork = _G.Madwork
 --[[
 {Madwork}
-
 -[ProfileService]---------------------------------------
 	(STANDALONE VERSION)
 	DataStore profiles - universal session-locked savable table API
 	
 	Official documentation:
 		https://madstudioroblox.github.io/ProfileService/
-
 	DevForum discussion:
 		https://devforum.roblox.com/t/ProfileService/667805
 	
@@ -45,7 +43,6 @@
 					Scope = "StoreScope", -- [string] -- DataStore scope
 				}
 			profile_template      [table] -- Profiles will default to given table (hard-copy) when no data was saved previously
-
 		ProfileService.IsLive() --> [bool] -- (CAN YIELD!!!)
 			-- Returns true if ProfileService is connected to live Roblox DataStores
 				
@@ -65,17 +62,14 @@
 				[function] (place_id, game_job_id) --> [string] "Repeat", "Cancel", "ForceLoad" or "Steal"
 					place_id      [number] or nil
 					game_job_id   [string] or nil
-
 				-- not_released_handler [function] will be triggered in cases where the profile is not released by a session. This
 				--	function may yield for as long as desirable and must return one of three string values:
-
 						["Repeat"] - ProfileService will repeat the profile loading proccess and may trigger the release handler again
 						["Cancel"] - ProfileStore:LoadProfileAsync() will immediately return nil
 						["ForceLoad"] - ProfileService will repeat the profile loading call, but will return Profile object afterwards
 							and release the profile for another session that has loaded the profile
 						["Steal"] - The profile will usually be loaded immediately, ignoring an existing remote session lock and applying
 							a session lock for this session.
-
 		ProfileStore:GlobalUpdateProfileAsync(profile_key, update_handler) --> [GlobalUpdates] or nil
 			-- Returns GlobalUpdates object if update was successful, otherwise returns nil
 			profile_key      [string] -- DataStore key
@@ -85,7 +79,6 @@
 			-- Reads profile without requesting a session lock; Data will not be saved and profile doesn't need to be released
 			profile_key   [string] -- DataStore key
 			version       nil or [string] -- DataStore key version
-
 		ProfileStore:ProfileVersionQuery(profile_key, sort_direction, min_date, max_date) --> [ProfileVersionQuery]
 			profile_key      [string]
 			sort_direction   nil or [Enum.SortDirection]
@@ -100,9 +93,7 @@
 			profile_key      [string] -- DataStore key
 			update_handler   [function] (GlobalUpdates) -- This function gains access to GlobalUpdates object methods
 				(update_handler can't yield)
-
 	Methods [ProfileVersionQuery]:
-
 		ProfileVersionQuery:NextAsync() --> [Profile] or nil -- (Yields)
 			-- Returned profile has the same rules as profile returned by :ViewProfileAsync()
 		
@@ -119,16 +110,13 @@
 			Profile.MetaData.MetaTagsLatest      [table] (Read-only) -- Latest version of MetaData.MetaTags that was definetly saved to DataStore
 				(You can use Profile.MetaData.MetaTagsLatest for product purchase save confirmation, but create a system to clear old tags after
 				they pile up)
-
 		Profile.MetaTagsUpdated   [ScriptSignal] (meta_tags_latest) -- Fires after every auto-save, after
 			--	Profile.MetaData.MetaTagsLatest has been updated with the version that's guaranteed to be saved;
 			--  .MetaTagsUpdated will fire regardless of whether .MetaTagsLatest changed after update;
 			--	.MetaTagsUpdated may fire after the Profile is released - changes to Profile.Data are not saved
 			--	after release.
-
 		Profile.RobloxMetaData    [table] -- Writable table that gets saved automatically and once the profile is released
 		Profile.UserIds           [table] -- (Read-only) -- {user_id [number], ...} -- User ids associated with this profile
-
 		Profile.KeyInfo           [DataStoreKeyInfo]
 		Profile.KeyInfoUpdated    [ScriptSignal] (key_info [DataStoreKeyInfo])
 		
@@ -150,18 +138,14 @@
 			
 		Profile:Release() -- Call after the session has finished working with this profile
 			e.g., after the player leaves (Profile object will become expired) (Does not yield)
-
 		Profile:ListenToHopReady(listener) --> [ScriptConnection] () -- Passed listener will be executed after the releasing UpdateAsync call finishes;
 			--	Wrap universe teleport requests with this method AFTER releasing the profile to improve session lock sharing between universe places;
 			--  :ListenToHopReady() will usually call the listener in around a second, but may ocassionally take up to 7 seconds when a release happens
 			--	next to an auto-update in regular usage scenarios.
-
 		Profile:AddUserId(user_id) -- Associates user_id with profile (GDPR compliance)
 			user_id   [number]
-
 		Profile:RemoveUserId(user_id) -- Unassociates user_id with profile (safe function)
 			user_id   [number]
-
 		Profile:Identify() --> [string] -- Returns a string containing DataStore name, scope and key; Used for debug;
 			-- Example return: "[Store:"GameData";Scope:"Live";Key:"Player_2312310"]"
 		
@@ -170,11 +154,8 @@
 			value      [any]
 		
 		Profile:Save() -- Call to quickly progress global update state or to speed up save validation processes (Does not yield)
-
 		-- VIEW-MODE ONLY:
-
 		Profile:ClearGlobalUpdates() -- Clears all global updates data from a profile payload
-
 		Profile:OverwriteAsync() -- (Yields) Saves the profile payload to the DataStore and removes the session lock
 		
 	Methods [GlobalUpdates]:
@@ -1581,11 +1562,9 @@ local ProfileVersionQuery = {
 		_sort_direction = sort_direction,
 		_min_date = min_date,
 		_max_date = max_date,
-
 		_query_pages = pages, -- [DataStoreVersionPages]
 		_query_index = index, -- [number]
 		_query_failure = false,
-
 		_is_query_yielded = false,
 		_query_queue = {},
 	--]]
@@ -2287,23 +2266,19 @@ function ProfileService.GetProfileStore(profile_store_index, profile_template) -
 	}
 	setmetatable(profile_store, ProfileStore)
 
-	local options = Instance.new("DataStoreOptions")
-	options:SetExperimentalFeatures({ v2 = true })
-
 	if IsLiveCheckActive == true then
 		profile_store._is_pending = true
 		task.spawn(function()
 			WaitForLiveAccessCheck()
 			if UseMockDataStore == false then
 				profile_store._global_data_store =
-					DataStoreService:GetDataStore(profile_store_name, profile_store_scope, options)
+					DataStoreService:GetDataStore(profile_store_name, profile_store_scope)
 			end
 			profile_store._is_pending = false
 		end)
 	else
 		if UseMockDataStore == false then
-			profile_store._global_data_store =
-				DataStoreService:GetDataStore(profile_store_name, profile_store_scope, options)
+			profile_store._global_data_store = DataStoreService:GetDataStore(profile_store_name, profile_store_scope)
 		end
 	end
 
@@ -2427,11 +2402,8 @@ task.spawn(function()
 			-- 1) Release all active profiles: --
 			-- Clone AutoSaveList to a new table because AutoSaveList changes when profiles are released:
 			local on_close_save_job_count = 0
-			local active_profiles = {} -- selene: allow(manual_table_clone)
-			-- selene: allow(manual_table_clone)
-			for index, profile in ipairs(AutoSaveList) do -- selene: allow(manual_table_clone)
-				active_profiles[index] = profile -- selene: allow(manual_table_clone)
-			end -- selene: allow(manual_table_clone)
+			local active_profiles = table.clone(AutoSaveList)
+
 			-- Release the profiles; Releasing profiles can trigger listeners that release other profiles, so check active state:
 			for _, profile in ipairs(active_profiles) do
 				if profile:IsActive() == true then

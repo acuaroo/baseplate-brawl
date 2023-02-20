@@ -29,6 +29,15 @@
         "$path": "workspace/Client/Player"
       },
       "$ignoreUnknownInstances": true
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "$path": "workspace/Shared"
+      },
+      "$ignoreUnknownInstances": true
     }
   }
 }
