@@ -29,6 +29,7 @@ PlayerService.PlayerAdded:Connect(function(player)
 			Game = "GAME",
 			Movement = "WALKING",
 			Rapid = {},
+			Debounces = {},
 			CombatTagged = 0,
 		},
 		Hotbar = self._playerProfile.Data.hotbar,
