@@ -17,6 +17,38 @@ local Data = require(script.Parent.Data)
 local Players = {}
 Players.__index = Players
 
+function Players:UpdateState(state, value, duration, reset)
+	local currentState = table.clone(self._playerReplica[state])
+
+	if typeof(currentState) == "table" then
+		self._playerReplica:SetValue({ state }, table.insert(currentState, value))
+		local position = table.find(currentState, value)
+
+		task.delay(duration, function()
+			self._playerReplica:SetValue({ state }, table.remove(currentState, position))
+		end)
+	else
+		self._playerReplica:SetValue({ state }, value)
+
+		task.delay(duration, function()
+			self._playerReplica:SetValue({ state }, reset)
+		end)
+	end
+end
+
+function Players:GetMetaplayer(player)
+	local metaplayer = nil
+
+	for _, mplayer in Players do
+		if mplayer._playerObject == player then
+			metaplayer = mplayer
+			break
+		end
+	end
+
+	return metaplayer
+end
+
 PlayerService.PlayerAdded:Connect(function(player)
 	local playerProfile = Data:ProfilePlayer(player)
 	local self = setmetatable({}, Players)
@@ -25,13 +57,11 @@ PlayerService.PlayerAdded:Connect(function(player)
 	self._playerProfile = playerProfile
 
 	self.State = {
-		Main = {
-			Game = "GAME",
-			Movement = "WALKING",
-			Rapid = {},
-			Debounces = {},
-			CombatTagged = 0,
-		},
+		Game = "GAME",
+		Movement = "WALKING",
+		Rapid = {},
+		Debounces = {},
+		CombatTagged = 0,
 		Hotbar = self._playerProfile.Data.hotbar,
 		Inventory = self._playerProfile.Data.inventory,
 	}
@@ -44,3 +74,5 @@ PlayerService.PlayerAdded:Connect(function(player)
 
 	return self
 end)
+
+return Players

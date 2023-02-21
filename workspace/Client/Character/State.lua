@@ -53,9 +53,9 @@ ReplicaController.ReplicaOfClassCreated(player.UserId .. "_replica", function(re
 	State.replicaState = replica.Data
 	State.loaded = true
 
-	replica:ListenToChange({ "Main" }, function(new, _)
-		State.replicaState.Main = new
-		State:_changed("Main")
+	replica:ListenToChange({ "Rapid" }, function(new, _)
+		State.replicaState.Rapid = new
+		State:_changed("Rapid")
 	end)
 
 	replica:ListenToChange({ "Hotbar" }, function(new, _)
