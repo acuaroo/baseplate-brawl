@@ -15,6 +15,7 @@ local ReplicaService = require(ServerStorage.Modules["ReplicaService"])
 local Data = require(script.Parent.Data)
 
 local Players = {}
+local PlayerCache = {}
 Players.__index = Players
 
 function Players:UpdateState(state, value, duration, reset)
@@ -26,12 +27,18 @@ function Players:UpdateState(state, value, duration, reset)
 
 		task.delay(duration, function()
 			self._playerReplica:SetValue({ state }, table.remove(currentState, position))
+
+			--</ Cleanup for the table.clone state?
+			currentState = nil
 		end)
 	else
 		self._playerReplica:SetValue({ state }, value)
 
 		task.delay(duration, function()
 			self._playerReplica:SetValue({ state }, reset)
+
+			--</ Cleanup for the table.clone state?
+			currentState = nil
 		end)
 	end
 end

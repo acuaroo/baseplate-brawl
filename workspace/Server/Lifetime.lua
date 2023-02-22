@@ -13,7 +13,7 @@
 --
 local ServerStorage = game:GetService("ServerStorage")
 local ClientCast = require(ServerStorage["Modules"].ClientCast)
-local Players = require(script.Parent["Players"])
+local Players = require(script.Parent.Players)
 
 local preppedTools = {}
 
@@ -50,7 +50,8 @@ function Actions:Swing()
 		self._castConnection = nil
 	end
 
-	self.Metaplayer:RapidState("CombatTagged", true, 0.5)
+	self.Metaplayer:UpdateState("Rapid", "ACTIVATE", 0.96, nil)
+	print("ACTOVATE")
 end
 
 local Lifetime = {
