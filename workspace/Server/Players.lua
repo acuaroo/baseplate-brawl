@@ -46,7 +46,7 @@ end
 function Players:GetMetaplayer(player)
 	local metaplayer = nil
 
-	for _, mplayer in Players do
+	for _, mplayer in PlayerCache do
 		if mplayer._playerObject == player then
 			metaplayer = mplayer
 			break
@@ -78,6 +78,8 @@ PlayerService.PlayerAdded:Connect(function(player)
 		Data = self.State,
 		Replication = player,
 	})
+
+	table.insert(PlayerCache, self)
 
 	return self
 end)

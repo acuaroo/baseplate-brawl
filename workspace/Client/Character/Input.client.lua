@@ -41,6 +41,7 @@ local inputFunctions = {
 			end
 		end
 	end,
+	["Activate"] = function(key) end,
 }
 
 local inputMapper = {
@@ -74,5 +75,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 
 			inputFunctions[inputCall](inputArgs)
 		end
+	elseif inputType == Enum.UserInputType.MouseButton1 then
 	end
 end)

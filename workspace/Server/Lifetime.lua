@@ -51,7 +51,7 @@ function Actions:Swing()
 	end
 
 	self.Metaplayer:UpdateState("Rapid", "ACTIVATE", 0.96, nil)
-	print("ACTOVATE")
+	print("ACTIVATE")
 end
 
 local Lifetime = {
@@ -90,7 +90,7 @@ local Lifetime = {
 	["Unequip"] = {
 		["meleeUneq"] = function(player, tool)
 			local _tool = get(player, tool)
-			_tool:Cleanup()
+			--_tool:Cleanup()
 		end,
 	},
 }
