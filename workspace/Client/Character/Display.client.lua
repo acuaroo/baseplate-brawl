@@ -16,8 +16,10 @@ local Util = require(script.Parent:WaitForChild("Util"))
 
 local events = ReplicatedStorage:WaitForChild("Events")
 local getKeyTool = events["GetKeyTool"]
+local getActiveTool = events["GetActiveTool"]
 
 local player = PlayerService.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 local playerGui = player.PlayerGui
 
 local hotbarGui = playerGui.Hotbar
@@ -57,4 +59,10 @@ State.Connect(loadHotbar, "Hotbar")
 
 getKeyTool.OnInvoke = function(key)
 	return hotbarTools[key]
+end
+
+getActiveTool.OnInvoke = function()
+	local activeTool = State:GetState().ActiveTool
+
+	return character:FindFirstChild(activeTool)
 end

@@ -17,6 +17,22 @@ local events = ReplicatedStorage:WaitForChild("Events")
 local getKeyTool = events["GetKeyTool"]
 local requestTool = events["RequestTool"]
 
+local getActiveTool = events["GetActiveTool"]
+local toolCall = events["ToolCall"]
+
+local function clientCycle(cycle)
+	if not Lifetime[cycle.Name] then
+		return
+	end
+
+	local clientFunctionName = cycle:GetAttribute("ClientCall")
+	local clientFunction = Lifetime[cycle.Name][clientFunctionName]
+
+	if clientFunction then
+		clientFunction()
+	end
+end
+
 local inputFunctions = {
 	["CheckToolKey"] = function(key)
 		local tool = getKeyTool:Invoke(key)
@@ -29,19 +45,23 @@ local inputFunctions = {
 				return
 			end
 
-			if not Lifetime[cycle.Name] then
+			clientCycle(cycle)
+		end
+	end,
+	["Activate"] = function()
+		local activeTool = getActiveTool:Invoke()
+
+		if activeTool and activeTool.Lifetime:FindFirstChild("Activate") then
+			local toolName = activeTool.Name
+			local valid, cycle = toolCall:InvokeServer(toolName, "Activate")
+
+			if not valid or not cycle then
 				return
 			end
 
-			local clientFunctionName = cycle:GetAttribute("ClientCall")
-			local clientFunction = Lifetime[cycle.Name][clientFunctionName]
-
-			if clientFunction then
-				clientFunction()
-			end
+			clientCycle(cycle)
 		end
 	end,
-	["Activate"] = function(key) end,
 }
 
 local inputMapper = {
@@ -53,6 +73,7 @@ local inputMapper = {
 		[Enum.KeyCode.Five] = { ["Call"] = "CheckToolKey", ["Args"] = 5 },
 		[Enum.KeyCode.Six] = { ["Call"] = "CheckToolKey", ["Args"] = 6 },
 	},
+	["MouseButton1"] = { ["Call"] = "Activate", ["Args"] = nil },
 }
 
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
@@ -76,5 +97,11 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 			inputFunctions[inputCall](inputArgs)
 		end
 	elseif inputType == Enum.UserInputType.MouseButton1 then
+		local inputMap = inputMapper["MouseButton1"]
+
+		local inputCall = inputMap["Call"]
+		local inputArgs = inputMap["Args"]
+
+		inputFunctions[inputCall](inputArgs)
 	end
 end)

@@ -17,6 +17,9 @@ local Players = require(script.Parent.Players)
 
 local preppedTools = {}
 
+local Actions = {}
+Actions.__index = Actions
+
 local function prep(player, tool)
 	if not preppedTools[player.Name] then
 		preppedTools[player.Name] = {}
@@ -29,6 +32,11 @@ local function prep(player, tool)
 	end
 
 	_tool = { ["ToolObject"] = tool }
+	_tool.Metaplayer = Players:GetMetaplayer(player)
+	_tool.Metaplayer:UpdateState("ActiveTool", tool.Name, nil, nil)
+
+	setmetatable(_tool, Actions)
+	preppedTools[player.Name][tool.Name] = _tool
 
 	return _tool
 end
@@ -36,9 +44,6 @@ end
 local function get(player, tool)
 	return preppedTools[player.Name][tool.Name]
 end
-
-local Actions = {}
-Actions.__index = Actions
 
 function Actions:Swing()
 	self.Caster:Start()
@@ -63,15 +68,12 @@ local Lifetime = {
 				return
 			end
 
-			setmetatable(_tool, Actions)
-
 			local rayParams = RaycastParams.new()
 			rayParams.FilterDescendantsInstances = { player.Character }
 			rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
 			local caster = ClientCast.new(tool.Handle, rayParams)
 			_tool.Caster = caster
-			_tool.Metaplayer = Players:GetMetaplayer(player)
 		end,
 	},
 	["Activate"] = {
@@ -90,6 +92,7 @@ local Lifetime = {
 	["Unequip"] = {
 		["meleeUneq"] = function(player, tool)
 			local _tool = get(player, tool)
+			_tool.Metaplayer:UpdateState("ActiveTool", "NONE", nil, nil)
 			--_tool:Cleanup()
 		end,
 	},

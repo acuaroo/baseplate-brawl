@@ -40,6 +40,10 @@ function State:GetState()
 end
 
 function State:_changed(name)
+	if not connections[name] then
+		return
+	end
+
 	for _, connection in connections[name] do
 		connection()
 	end
@@ -66,6 +70,11 @@ ReplicaController.ReplicaOfClassCreated(player.UserId .. "_replica", function(re
 	replica:ListenToChange({ "Inventory" }, function(new, _)
 		State.replicaState.Inventory = new
 		State:_changed("Inventory")
+	end)
+
+	replica:ListenToChange({ "ActiveTool" }, function(new, _)
+		State.replicaState.ActiveTool = new
+		State:_changed("ActiveTool")
 	end)
 end)
 

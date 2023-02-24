@@ -19,11 +19,20 @@ local PlayerCache = {}
 Players.__index = Players
 
 function Players:UpdateState(state, value, duration, reset)
-	local currentState = table.clone(self._playerReplica[state])
+	-- print(self._playerReplica)
+	-- print(self._playerReplica.Data)
+	-- print(state)
+	local currentState = self._playerReplica.Data[state]
 
 	if typeof(currentState) == "table" then
+		currentState = table.clone(currentState)
+
 		self._playerReplica:SetValue({ state }, table.insert(currentState, value))
 		local position = table.find(currentState, value)
+
+		if not duration then
+			return
+		end
 
 		task.delay(duration, function()
 			self._playerReplica:SetValue({ state }, table.remove(currentState, position))
@@ -33,6 +42,10 @@ function Players:UpdateState(state, value, duration, reset)
 		end)
 	else
 		self._playerReplica:SetValue({ state }, value)
+
+		if not duration then
+			return
+		end
 
 		task.delay(duration, function()
 			self._playerReplica:SetValue({ state }, reset)
@@ -68,6 +81,7 @@ PlayerService.PlayerAdded:Connect(function(player)
 		Movement = "WALKING",
 		Rapid = {},
 		Debounces = {},
+		ActiveTool = "NONE",
 		CombatTagged = 0,
 		Hotbar = self._playerProfile.Data.hotbar,
 		Inventory = self._playerProfile.Data.inventory,

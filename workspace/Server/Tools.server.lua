@@ -14,6 +14,7 @@ local Lifetime = require(script.Parent.Lifetime)
 
 local events = ReplicatedStorage:WaitForChild("Events")
 local requestTool = events["RequestTool"]
+local toolCall = events["ToolCall"]
 
 local function lifetimeUpdate(cycle, ...)
 	if not Lifetime[cycle.Name] then
@@ -59,6 +60,25 @@ requestTool.OnServerInvoke = function(player, toolName)
 
 			return true, backpackTool.Lifetime.Equip
 		end
+	else
+		return false, nil
+	end
+end
+
+toolCall.OnServerInvoke = function(player, toolName, request)
+	local hasTool = Data:CheckHotbar(player, toolName)
+	local characterTool = player.Character:FindFirstChild(toolName)
+
+	if hasTool and characterTool then
+		local lifetimeFromRequest = characterTool.Lifetime:FindFirstChild(request)
+
+		if not lifetimeFromRequest then
+			return false, nil
+		end
+
+		lifetimeUpdate(lifetimeFromRequest, player, characterTool)
+
+		return true, lifetimeFromRequest
 	else
 		return false, nil
 	end
