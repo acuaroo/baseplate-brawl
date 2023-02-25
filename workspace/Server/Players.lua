@@ -10,9 +10,16 @@
 --
 
 local PlayerService = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local TweenService = game:GetService("TweenService")
 local ReplicaService = require(ServerStorage.Modules["ReplicaService"])
 local Data = require(script.Parent.Data)
+
+local events = ReplicatedStorage:WaitForChild("Events")
+local movementCall = events["MovementCall"]
+
+local sprintTweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
 
 local Players = {}
 local PlayerCache = {}
@@ -22,23 +29,34 @@ function Players:UpdateState(state, value, duration, reset)
 	-- print(self._playerReplica)
 	-- print(self._playerReplica.Data)
 	-- print(state)
-	local currentState = self._playerReplica.Data[state]
+	local dummyState = self._playerReplica.Data[state]
 
-	if typeof(currentState) == "table" then
-		currentState = table.clone(currentState)
+	if typeof(dummyState) == "table" then
+		dummyState = table.clone(dummyState)
 
-		self._playerReplica:SetValue({ state }, table.insert(currentState, value))
-		local position = table.find(currentState, value)
+		if #dummyState > 0 then
+			table.insert(dummyState, value)
+			self._playerReplica:SetValue({ state }, dummyState)
+		else
+			self._playerReplica:SetValue({ state }, { value })
+		end
 
 		if not duration then
 			return
 		end
 
 		task.delay(duration, function()
-			self._playerReplica:SetValue({ state }, table.remove(currentState, position))
+			dummyState = nil
+			dummyState = table.clone(self._playerReplica.Data[state])
 
-			--</ Cleanup for the table.clone state?
-			currentState = nil
+			local position = table.find(dummyState, value)
+
+			if not position then
+				return
+			end
+
+			table.remove(dummyState, position)
+			self._playerReplica:SetValue({ state }, dummyState)
 		end)
 	else
 		self._playerReplica:SetValue({ state }, value)
@@ -49,11 +67,12 @@ function Players:UpdateState(state, value, duration, reset)
 
 		task.delay(duration, function()
 			self._playerReplica:SetValue({ state }, reset)
-
-			--</ Cleanup for the table.clone state?
-			currentState = nil
 		end)
 	end
+end
+
+function Players:GetState(state)
+	return self._playerReplica.Data[state]
 end
 
 function Players:GetMetaplayer(player)
@@ -75,6 +94,7 @@ PlayerService.PlayerAdded:Connect(function(player)
 
 	self._playerObject = player
 	self._playerProfile = playerProfile
+	self.Speed = 16
 
 	self.State = {
 		Game = "GAME",
@@ -98,4 +118,48 @@ PlayerService.PlayerAdded:Connect(function(player)
 	return self
 end)
 
+movementCall.OnServerInvoke = function(player, enable)
+	local metaplayer = Players:GetMetaplayer(player)
+
+	if not metaplayer then
+		return false
+	end
+
+	local movementState = metaplayer._playerReplica.Data.Movement
+	local character = player.Character
+
+	if not character then
+		return false
+	end
+
+	local humanoid = character:FindFirstChild("Humanoid")
+
+	if not humanoid then
+		return false
+	end
+
+	local rapidState = metaplayer:GetState("Rapid")
+
+	if table.find(rapidState, "STUN") then
+		return
+	end
+
+	if enable and movementState == "WALKING" then
+		metaplayer.Speed = 26
+
+		local sprintTween = TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = metaplayer.Speed })
+		sprintTween:Play()
+
+		metaplayer:UpdateState("Movement", "RUNNING", nil, nil)
+	elseif not enable and movementState == "RUNNING" then
+		metaplayer.Speed = 16
+
+		local sprintTween = TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = metaplayer.Speed })
+		sprintTween:Play()
+
+		metaplayer:UpdateState("Movement", "WALKING", nil, nil)
+	end
+
+	return true
+end
 return Players

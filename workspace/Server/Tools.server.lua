@@ -16,16 +16,22 @@ local events = ReplicatedStorage:WaitForChild("Events")
 local requestTool = events["RequestTool"]
 local toolCall = events["ToolCall"]
 
-local function lifetimeUpdate(cycle, ...)
-	if not Lifetime[cycle.Name] then
+local function lifetimeUpdate(cycle, tail, ...)
+	if not tail then
+		tail = ""
+	end
+
+	if not Lifetime[cycle.Name .. tail] then
 		return
 	end
 
 	local serverFunctionName = cycle:GetAttribute("ServerCall")
-	local serverFunction = Lifetime[cycle.Name][serverFunctionName]
+	local serverFunction = Lifetime[cycle.Name .. tail][serverFunctionName]
 
 	if serverFunction then
-		serverFunction(...)
+		return serverFunction(...)
+	else
+		return false, nil
 	end
 end
 
@@ -50,13 +56,13 @@ requestTool.OnServerInvoke = function(player, toolName)
 		humanoid:UnequipTools()
 
 		if characterTool then
-			lifetimeUpdate(characterTool.Lifetime.Unequip, player, characterTool)
+			lifetimeUpdate(characterTool.Lifetime.Unequip, nil, player, characterTool)
 
 			return true, characterTool.Lifetime.Unequip
 		elseif backpackTool then
 			humanoid:EquipTool(backpackTool)
 
-			lifetimeUpdate(backpackTool.Lifetime.Equip, player, backpackTool)
+			lifetimeUpdate(backpackTool.Lifetime.Equip, nil, player, backpackTool)
 
 			return true, backpackTool.Lifetime.Equip
 		end
@@ -66,19 +72,21 @@ requestTool.OnServerInvoke = function(player, toolName)
 end
 
 toolCall.OnServerInvoke = function(player, toolName, request)
+	local split = string.split(request, "|")
+	local requestMain = split[1]
+	local requestTail = split[2]
+
 	local hasTool = Data:CheckHotbar(player, toolName)
 	local characterTool = player.Character:FindFirstChild(toolName)
 
 	if hasTool and characterTool then
-		local lifetimeFromRequest = characterTool.Lifetime:FindFirstChild(request)
+		local lifetimeFromRequest = characterTool.Lifetime:FindFirstChild(requestMain)
 
 		if not lifetimeFromRequest then
 			return false, nil
 		end
 
-		lifetimeUpdate(lifetimeFromRequest, player, characterTool)
-
-		return true, lifetimeFromRequest
+		return lifetimeUpdate(lifetimeFromRequest, requestTail, player, characterTool)
 	else
 		return false, nil
 	end
