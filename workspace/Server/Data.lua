@@ -9,6 +9,7 @@
 
     @ Private @
         Data:_leaderstats(profile, player)
+		Data:_loadhotbar(profile, player)
 ]]
 --
 

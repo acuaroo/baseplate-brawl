@@ -1,15 +1,22 @@
+-- [[ Anim.lua ]] --
+
+--[[
+    @ Public @
+		Anim:PlayAnimation(name, duration)
+		Anim:StopAnimation(name)
+]]
+--
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ContentProvider = game:GetService("ContentProvider")
 
 local animations = ReplicatedStorage:WaitForChild("Animations")
 local events = ReplicatedStorage.Events
-
 local animationRelay = events:WaitForChild("AnimationRelay")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-
 local humanoid = character:WaitForChild("Humanoid")
 local animator = humanoid:WaitForChild("Animator")
 

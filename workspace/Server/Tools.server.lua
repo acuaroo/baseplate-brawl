@@ -2,9 +2,9 @@
 
 --[[
     @ Connections @
-        requestTool.OnServerInvoke = function()
-            -> Returns validity and lifetime cycle
-			-> Calls lifetime cycle for the server
+        requestTool.OnServerInvoke = function(player, toolName)
+		toolCall.OnServerInvoke = function(player, toolName, request)
+
 ]]
 --
 

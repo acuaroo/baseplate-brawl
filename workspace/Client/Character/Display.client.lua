@@ -3,9 +3,8 @@
 --[[
     @ Connections @
         State.Connect(_, ...)
-            -> Loads the hotbar
-            -> Updates the hotbar
-            
+		getKeyTool.OnInvoke = function(key)
+		getActiveTool.OnInvoke = function()
 ]]
 --
 

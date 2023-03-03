@@ -2,9 +2,21 @@
 
 --[[
     @ Connections @
-        UserInputService.InputBegan()
-            -> Maps key to inputFunction
-			-> Calls inputFunction
+        UserInputService.InputBegan(inputObject, gameProcessedEvent)
+		UserInputService.InputEnded(inputObject, gameProcessedEvent)
+		
+	@ Structure @
+		inputFunctions {
+			["Function"] = function(args, ...)
+				--<::>--
+			end,
+		}
+
+		inputMapper {
+			["InputType"] = {
+				[Enum.InputType.Specfic] = { ["Call"] = "Function", ["Args"] = {} }
+			}
+		}
 ]]
 --
 

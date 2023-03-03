@@ -2,10 +2,13 @@
 
 --[[
     @ Connections @
-        PlayerService.PlayerAdded() 
-            -> Creates the metaplayer
-            -> Creates the player replica
-            -> Creates the player profile
+        PlayerService.PlayerAdded(player)
+		movementCall.OnServerInvoke = function(player, enable)
+
+	@ Public @
+		Players:UpdateState(state, value, duration, reset)
+		Players:GetState(state)		
+		Players:GetMetaplayer(player)
 ]]
 --
 

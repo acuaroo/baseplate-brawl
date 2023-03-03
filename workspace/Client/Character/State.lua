@@ -9,12 +9,8 @@
         State:_changed(name)
 
     @ Connections @
-        ReplicaController.ReplicaOfClassCreated() 
-            -> Creates the local player replica
-        
-        replica:ListenToChange() 
-            -> Listens to changes in the replica
-            -> Updates the local player state
+        ReplicaController.ReplicaOfClassCreated(player.UserId .. "_replica", function(replica)
+        replica:ListenToChange({ "STATENAME" }, function(new, _)
             
 ]]
 --
