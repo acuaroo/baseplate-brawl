@@ -53,18 +53,23 @@ requestTool.OnServerInvoke = function(player, toolName)
 			return
 		end
 
-		humanoid:UnequipTools()
-
 		if characterTool then
-			lifetimeUpdate(characterTool.Lifetime.Unequip, nil, player, characterTool)
+			local valid, cycle = lifetimeUpdate(characterTool.Lifetime.Unequip, nil, player, characterTool)
 
-			return true, characterTool.Lifetime.Unequip
+			if valid then
+				humanoid:UnequipTools()
+			end
+
+			return valid, cycle
 		elseif backpackTool then
-			humanoid:EquipTool(backpackTool)
+			local valid, cycle = lifetimeUpdate(backpackTool.Lifetime.Equip, nil, player, backpackTool)
 
-			lifetimeUpdate(backpackTool.Lifetime.Equip, nil, player, backpackTool)
+			if valid then
+				humanoid:UnequipTools()
+				humanoid:EquipTool(backpackTool)
+			end
 
-			return true, backpackTool.Lifetime.Equip
+			return valid, cycle
 		end
 	else
 		return false, nil

@@ -72,6 +72,16 @@ ReplicaController.ReplicaOfClassCreated(player.UserId .. "_replica", function(re
 		State.replicaState.ActiveTool = new
 		State:_changed("ActiveTool")
 	end)
+
+	replica:ListenToChange({ "Debounces" }, function(new, _)
+		State.replicaState.Debounces = new
+		State:_changed("Debounces")
+	end)
+
+	replica:ListenToChange({ "Movement" }, function(new, _)
+		State.replicaState.Debounces = new
+		State:_changed("Movement")
+	end)
 end)
 
 ReplicaController.RequestData()

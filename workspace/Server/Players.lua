@@ -21,8 +21,9 @@ local Data = require(script.Parent.Data)
 
 local events = ReplicatedStorage:WaitForChild("Events")
 local movementCall = events["MovementCall"]
+local animationRelay = events:WaitForChild("AnimationRelay")
 
-local sprintTweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+local sprintTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
 
 local Players = {}
 local PlayerCache = {}
@@ -95,6 +96,52 @@ function Players:RemoveState(state, value)
 	end
 end
 
+function Players:UpdateSpeed(speed, returnHandler, id, duration, humanoidReflect)
+	if returnHandler == "DEFAULT" then
+		self.Speed += speed
+
+		if humanoidReflect ~= "STOP" then
+			self._playerObject.Character.Humanoid.WalkSpeed = self.Speed
+		end
+
+		self._speedList = self._speedList or {}
+
+		table.insert(self._speedList, { ["ID"] = id, ["Speed"] = speed, ["Return"] = returnHandler })
+	elseif returnHandler == "RETURN" then
+		if not self._speedList then
+			return
+		end
+
+		for locus, speedData in self._speedList do
+			if speedData.ID ~= id then
+				continue
+			end
+
+			self.Speed -= speedData.Speed
+			self._playerObject.Character.Humanoid.WalkSpeed = self.Speed
+
+			table.remove(self._speedList, locus)
+			break
+		end
+	elseif returnHandler == "DURATION" then
+		self.Speed += speed
+
+		if humanoidReflect ~= "STOP" then
+			self._playerObject.Character.Humanoid.WalkSpeed = self.Speed
+		end
+
+		self._speedList = self._speedList or {}
+		local position = table.insert(self._speedList, { ["ID"] = id, ["Speed"] = speed, ["Return"] = returnHandler })
+
+		task.delay(duration, function()
+			self.Speed -= speed
+			self._playerObject.Character.Humanoid.WalkSpeed = self.Speed
+
+			table.remove(self._speedList, position)
+		end)
+	end
+end
+
 function Players:GetState(state)
 	return self._playerReplica.Data[state]
 end
@@ -104,6 +151,19 @@ function Players:GetMetaplayer(player)
 
 	for _, mplayer in PlayerCache do
 		if mplayer._playerObject == player then
+			metaplayer = mplayer
+			break
+		end
+	end
+
+	return metaplayer
+end
+
+function Players:GetMetaplayerFromCharacter(character)
+	local metaplayer = nil
+
+	for _, mplayer in PlayerCache do
+		if mplayer._playerObject.Character == character then
 			metaplayer = mplayer
 			break
 		end
@@ -126,7 +186,7 @@ PlayerService.PlayerAdded:Connect(function(player)
 		Rapid = {},
 		Debounces = {},
 		ActiveTool = "NONE",
-		CombatTagged = 0,
+		CombatTagged = false,
 		Hotbar = self._playerProfile.Data.hotbar,
 		Inventory = self._playerProfile.Data.inventory,
 	}
@@ -162,9 +222,13 @@ movementCall.OnServerInvoke = function(player, enable)
 		return false
 	end
 
+	if humanoid.MoveDirection.Magnitude < 0.1 then
+		return false
+	end
+
 	local rapidState = metaplayer:GetState("Rapid")
 
-	if table.find(rapidState, "STUN") then
+	if table.find(rapidState, "STUN") or table.find(rapidState, "ACTIVATE") or table.find(rapidState, "SHIELD") then
 		return
 	end
 
@@ -175,6 +239,23 @@ movementCall.OnServerInvoke = function(player, enable)
 		sprintTween:Play()
 
 		metaplayer:UpdateState("Movement", "RUNNING", nil, nil)
+
+		task.spawn(function()
+			while task.wait() do
+				if humanoid.MoveDirection.Magnitude >= 0.1 then
+					continue
+				end
+
+				metaplayer.Speed = 16
+
+				sprintTween = TweenService:Create(humanoid, sprintTweenInfo, { WalkSpeed = metaplayer.Speed })
+				sprintTween:Play()
+
+				animationRelay:FireClient(player, "Sprint", nil, "STOP")
+				metaplayer:UpdateState("Movement", "WALKING", nil, nil)
+				break
+			end
+		end)
 	elseif not enable and movementState == "RUNNING" then
 		metaplayer.Speed = 16
 
@@ -182,6 +263,11 @@ movementCall.OnServerInvoke = function(player, enable)
 		sprintTween:Play()
 
 		metaplayer:UpdateState("Movement", "WALKING", nil, nil)
+
+		task.delay(0.1, function()
+			--<: make sure it actually stopped
+			animationRelay:FireClient(player, "Sprint", nil, "STOP")
+		end)
 	end
 
 	return true

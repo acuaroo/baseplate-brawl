@@ -66,6 +66,7 @@ end
 
 function Actions:Swing()
 	self.Caster:Start()
+	self.Metaplayer:UpdateSpeed(-4, "DURATION", "MELEE_ACTIVATE", 0.76)
 
 	self._hitDebounce = {}
 	self._shieldHitDebounce = {}
@@ -83,12 +84,29 @@ function Actions:Swing()
 	self.Metaplayer:UpdateState("Rapid", "ACTIVATE", 0.76)
 	self.Metaplayer:UpdateState("Debounces", "MELEE_ACTIVATE", 0.76)
 
+	self.interject = false
+
 	self._castConnection = self.Caster.HumanoidCollided:Connect(function(ray, humanoid)
-		if self._hitDebounce[humanoid] then
+		if self._hitDebounce[humanoid] or self.interject then
 			return
 		end
 
 		self._hitDebounce[humanoid] = true
+
+		local rayShield = humanoid.Parent:FindFirstChild("Shield")
+
+		if rayShield then
+			local vectorDiff = humanoid.Parent.HumanoidRootPart.Position
+				- self.PlayerCharacter.HumanoidRootPart.Position
+			local vectorDir = vectorDiff.Unit
+
+			local angle = math.acos(humanoid.Parent.HumanoidRootPart.CFrame.LookVector:Dot(vectorDir))
+
+			if angle >= math.rad(90) then
+				self:_shieldHitProcess({ Instance = rayShield })
+				return
+			end
+		end
 
 		local enemy = PlayerService:GetPlayerFromCharacter(humanoid.Parent)
 		local metaenemy = Players:GetMetaplayer(enemy)
@@ -99,7 +117,7 @@ function Actions:Swing()
 		animationName = string.gsub(animationName, "@", operator)
 
 		if enemy then
-			animationRelay:FireClient(enemy, animationName, "PLAY")
+			animationRelay:FireClient(enemy, animationName, nil, "PLAY")
 			metaenemy:UpdateState("Rapid", "STUN", 0.96)
 		else
 			local animationTrack = humanoid:LoadAnimation(ReplicatedStorage.Animations[animationName])
@@ -112,20 +130,15 @@ function Actions:Swing()
 	end)
 
 	self._shieldConnection = self.Caster.Collided:Connect(function(ray)
-		if self._shieldHitDebounce[ray.Instance] then
-			return
-		end
-
-		self._shieldHitDebounce[ray.Instance] = true
-
-		if ray.Instance == "Shield" then
-			local shield = ray.Instance
+		if ray.Instance.Name == "Shield" then
+			self:_shieldHitProcess(ray)
 		end
 	end)
 end
 
 function Actions:Shield()
 	self.Metaplayer:UpdateState("Rapid", "SHIELD")
+	self.Metaplayer:UpdateSpeed(-8, "DEFAULT", "SHIELD")
 
 	local character = self.PlayerCharacter
 	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
@@ -144,6 +157,7 @@ end
 
 function Actions:ShieldStop()
 	self.Metaplayer:RemoveState("Rapid", "SHIELD")
+	self.Metaplayer:UpdateSpeed(8, "RETURN", "SHIELD")
 
 	if self._shield then
 		self._shield:Destroy()
@@ -156,6 +170,91 @@ function Actions:ShieldStop()
 	end
 
 	self.Metaplayer:UpdateState("Debounces", "SHIELD_ACTIVATE", 1.25)
+end
+
+function Actions:MeleeCleanup()
+	if self._castConnection then
+		self._castConnection:Disconnect()
+		self._castConnection = nil
+	end
+
+	if self._shieldConnection then
+		self._shieldConnection:Disconnect()
+		self._shieldConnection = nil
+	end
+
+	self._hitDebounce = {}
+	self._shieldHitDebounce = {}
+
+	self:ShieldStop()
+
+	animationRelay:FireClient(self.Player, "MeleeLSwing", nil, "STOP")
+	animationRelay:FireClient(self.Player, "MeleeRSwing", nil, "STOP")
+	animationRelay:FireClient(self.Player, "MeleeOffhand", nil, "STOP")
+end
+
+function Actions:_shieldHitProcess(ray)
+	local rayShield = ray.Instance
+	local enemy = rayShield.Parent
+
+	--local metaenemy = Players:GetMetaplayerFromCharacter(enemy)
+	local enemyObj = PlayerService:GetPlayerFromCharacter(enemy)
+
+	self.interject = true
+
+	if self._shieldHitDebounce[ray.Instance] then
+		return
+	end
+
+	self._shieldHitDebounce[ray.Instance] = true
+
+	local shieldHealth = rayShield:GetAttribute("Health")
+	local knockPower = rayShield:GetAttribute("KnockPower")
+	local knockDuration = rayShield:GetAttribute("KnockDuration")
+	local platformDuration = rayShield:GetAttribute("PlatformDuration")
+
+	local character = self.PlayerCharacter
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+	rayShield:SetAttribute("Health", shieldHealth - 1)
+	self.Metaplayer:UpdateState("Rapid", "STUN", knockDuration)
+
+	self._knockbackAttachment = Instance.new("Attachment")
+	self._knockbackAttachment.Parent = humanoidRootPart
+	self._knockbackAttachment.Name = "KNOCKATTACHMENT"
+
+	self._linearKnockback = Instance.new("LinearVelocity")
+	self._linearKnockback.Attachment0 = self._knockbackAttachment
+	self._linearKnockback.Parent = self._knockbackAttachment
+
+	self._linearKnockback.MaxForce = math.huge
+
+	self._linearKnockback.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+	self._linearKnockback.VectorVelocity = humanoidRootPart.CFrame.LookVector * -knockPower
+
+	if shieldHealth <= 0 then
+		rayShield:Destroy()
+
+		animationRelay:FireClient(self.Player, "Stun", knockDuration, "PLAY")
+		animationRelay:FireClient(enemyObj, "MeleeOffhand", nil, "STOP")
+	end
+
+	task.delay(knockDuration, function()
+		if self._knockbackAttachment then
+			self._knockbackAttachment:Destroy()
+			self._knockbackAttachment = nil
+		end
+
+		if self._linearKnockback then
+			self._linearKnockback:Destroy()
+			self._linearKnockback = nil
+		end
+
+		task.wait(platformDuration)
+		self.interject = false
+
+		self.Metaplayer:RemoveState("Rapid", "STUN")
+	end)
 end
 
 local Lifetime = {
@@ -174,6 +273,7 @@ local Lifetime = {
 			local caster = ClientCast.new(tool.Handle, rayParams)
 			_tool.Caster = caster
 			_tool.PlayerCharacter = player.Character
+			_tool.Player = player
 
 			return true, tool.Lifetime.Equip
 		end,
@@ -216,6 +316,7 @@ local Lifetime = {
 			end
 
 			local rapidState = _tool.Metaplayer:GetState("Rapid")
+			local movementState = _tool.Metaplayer:GetState("Movement")
 
 			if table.find(rapidState, "ACTIVATE") then
 				return false, nil
@@ -225,7 +326,11 @@ local Lifetime = {
 				return false, nil
 			end
 
-			_tool:Shield(player)
+			if movementState == "RUNNING" or movementState == "ROLLING" then
+				return false, nil
+			end
+
+			_tool:Shield()
 
 			return true, tool.Lifetime.Offhand
 		end,
@@ -248,10 +353,24 @@ local Lifetime = {
 		["meleeUneq"] = function(player, tool)
 			local _tool = get(player, tool)
 
+			if not _tool then
+				return false, nil
+			end
+
+			local rapidState = _tool.Metaplayer:GetState("Rapid")
+
+			if
+				table.find(rapidState, "STUN")
+				or table.find(rapidState, "ACTIVATE")
+				or table.find(rapidState, "SHIELD")
+			then
+				return false, nil
+			end
+
 			_tool.Metaplayer:UpdateState("ActiveTool", "NONE", nil, nil)
+			_tool:MeleeCleanup()
 
 			return true, tool.Lifetime.Unequip
-			--_tool:Cleanup()
 		end,
 	},
 }
