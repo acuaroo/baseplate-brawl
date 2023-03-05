@@ -21,6 +21,10 @@ local Util = require(script.Parent.Util)
 local events = ReplicatedStorage.Events
 local animationRelay = events:WaitForChild("AnimationRelay")
 
+local assets = ServerStorage.Assets
+local visuals = assets.Visuals
+local shield = visuals.Shield
+
 local preppedTools = {}
 
 local Actions = {}
@@ -64,14 +68,20 @@ function Actions:Swing()
 	self.Caster:Start()
 
 	self._hitDebounce = {}
+	self._shieldHitDebounce = {}
 
 	if self._castConnection then
 		self._castConnection:Disconnect()
 		self._castConnection = nil
 	end
 
-	self.Metaplayer:UpdateState("Rapid", "ACTIVATE", 0.76, nil)
-	self.Metaplayer:UpdateState("Debounces", "MELEE_ACTIVATE", 0.76, nil)
+	if self._shieldConnection then
+		self._shieldConnection:Disconnect()
+		self._shieldConnection = nil
+	end
+
+	self.Metaplayer:UpdateState("Rapid", "ACTIVATE", 0.76)
+	self.Metaplayer:UpdateState("Debounces", "MELEE_ACTIVATE", 0.76)
 
 	self._castConnection = self.Caster.HumanoidCollided:Connect(function(ray, humanoid)
 		if self._hitDebounce[humanoid] then
@@ -90,7 +100,7 @@ function Actions:Swing()
 
 		if enemy then
 			animationRelay:FireClient(enemy, animationName, "PLAY")
-			metaenemy:UpdateState("Rapid", "STUN", 0.96, nil)
+			metaenemy:UpdateState("Rapid", "STUN", 0.96)
 		else
 			local animationTrack = humanoid:LoadAnimation(ReplicatedStorage.Animations[animationName])
 			animationTrack:Play()
@@ -100,10 +110,52 @@ function Actions:Swing()
 
 		self.Caster:Stop()
 	end)
+
+	self._shieldConnection = self.Caster.Collided:Connect(function(ray)
+		if self._shieldHitDebounce[ray.Instance] then
+			return
+		end
+
+		self._shieldHitDebounce[ray.Instance] = true
+
+		if ray.Instance == "Shield" then
+			local shield = ray.Instance
+		end
+	end)
 end
 
 function Actions:Shield()
-	print("shielding!")
+	self.Metaplayer:UpdateState("Rapid", "SHIELD")
+
+	local character = self.PlayerCharacter
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+	self._shield = shield:Clone()
+	self._shield.Parent = character
+
+	self._shield.CFrame = (humanoidRootPart.CFrame * CFrame.new(0, 0, -2))
+		* CFrame.Angles(math.rad(90), 0, math.rad(180))
+
+	self._shieldWeld = Instance.new("WeldConstraint")
+	self._shieldWeld.Parent = self._shield
+	self._shieldWeld.Part0 = self._shield
+	self._shieldWeld.Part1 = humanoidRootPart
+end
+
+function Actions:ShieldStop()
+	self.Metaplayer:RemoveState("Rapid", "SHIELD")
+
+	if self._shield then
+		self._shield:Destroy()
+		self._shield = nil
+	end
+
+	if self._shieldWeld then
+		self._shieldWeld:Destroy()
+		self._shieldWeld = nil
+	end
+
+	self.Metaplayer:UpdateState("Debounces", "SHIELD_ACTIVATE", 1.25)
 end
 
 local Lifetime = {
@@ -121,6 +173,7 @@ local Lifetime = {
 
 			local caster = ClientCast.new(tool.Handle, rayParams)
 			_tool.Caster = caster
+			_tool.PlayerCharacter = player.Character
 
 			return true, tool.Lifetime.Equip
 		end,
@@ -172,8 +225,7 @@ local Lifetime = {
 				return false, nil
 			end
 
-			print("start")
-			_tool:Shield()
+			_tool:Shield(player)
 
 			return true, tool.Lifetime.Offhand
 		end,
@@ -186,7 +238,7 @@ local Lifetime = {
 				return false, nil
 			end
 
-			print("stop")
+			_tool:ShieldStop(player)
 
 			return true, tool.Lifetime.Offhand
 		end,

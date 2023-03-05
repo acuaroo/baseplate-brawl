@@ -74,6 +74,27 @@ function Players:UpdateState(state, value, duration, reset)
 	end
 end
 
+function Players:RemoveState(state, value)
+	local dummyState = self._playerReplica.Data[state]
+
+	if typeof(dummyState) == "table" then
+		dummyState = table.clone(dummyState)
+
+		if #dummyState > 0 then
+			local position = table.find(dummyState, value)
+
+			if not position then
+				return
+			end
+
+			table.remove(dummyState, position)
+			self._playerReplica:SetValue({ state }, dummyState)
+		end
+	else
+		self._playerReplica:SetValue({ state }, nil)
+	end
+end
+
 function Players:GetState(state)
 	return self._playerReplica.Data[state]
 end
